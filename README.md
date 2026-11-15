@@ -48,7 +48,7 @@ Generasi tidak lagi memakai Codex CLI atau login ChatGPT. Konfigurasi Codex glob
 
 `npm run build` memeriksa sintaks worker, TypeScript, dan build UI. `npm test` mencakup kontrak provider, enkripsi settings, sesi dengan D1 terisolasi, penyimpanan gambar, routing, paginasi, dan aturan tinjauan klaim.
 
-Semua aksi tersedia sebagai MCP tools di `/mcp` (bearer token di `.dev.vars`), lihat [docs/mcp.md](docs/mcp.md). Konfigurasi `--env production` (Cloudflare Access) sudah disiapkan tetapi belum di-deploy. Aplikasi saat ini lokal. Link localhost tidak dapat dibagikan ke komputer lain. Worker harus berjalan agar antrean diproses. Riset mengambil publikasi nyata dari Europe PMC/PubMed; fallback PubMed dapat hanya menyediakan metadata, yang ditandai jelas. Tidak ada scraping Shopee, posting otomatis, atau pembuatan gambar AI.
+Semua aksi tersedia sebagai MCP tools di `/mcp` (bearer token di `.dev.vars`), lihat [docs/mcp.md](docs/mcp.md). Pada `--env production`, dashboard dan API bersifat publik tanpa login; `/mcp` tetap memerlukan bearer token. Link localhost tidak dapat dibagikan ke komputer lain. Worker harus berjalan agar antrean diproses. Riset mengambil publikasi nyata dari Europe PMC/PubMed; fallback PubMed dapat hanya menyediakan metadata, yang ditandai jelas. Tidak ada scraping Shopee, posting otomatis, atau pembuatan gambar AI.
 
 Ekspor JSON versi 2 mencakup record, jobs, dan sesi; tidak mencakup key, pengaturan API, atau berkas gambar. Simpan state Wrangler dan `.dev.vars` untuk backup lengkap. UI restore belum tersedia.
 

@@ -31,7 +31,7 @@
 		},
 	],
 	// Cloud deployment (not deployed yet). See docs/cloudflare-deployment.md.
-	// Fill in database_id and the Access values, set secrets with
+	// Fill in database_id, set secrets with
 	// `wrangler secret put MCP_TOKEN --env production` (and SETTINGS_ENCRYPTION_KEY),
 	// then `npm run deploy:prod`.
 	"env": {
@@ -39,8 +39,6 @@
 			"name": "rawatlogi",
 			"vars": {
 				"APP_MODE": "production",
-				"ACCESS_TEAM_DOMAIN": "rizmau.cloudflareaccess.com",
-				"ACCESS_AUD": "a079131840d2c9d3882aae9d2443d29b81ca7cd92554057fcabcdb6bd553e3ef",
 			},
 			"d1_databases": [
 				{

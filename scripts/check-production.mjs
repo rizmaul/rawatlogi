@@ -13,14 +13,6 @@ const real = (value) =>
   typeof value === "string" && value.length > 0 && !/REPLACE/i.test(value);
 if (prod?.vars?.APP_MODE !== "production")
   errors.push("APP_MODE must be production");
-if (
-  !/^[a-z0-9-]+\.cloudflareaccess\.com$/.test(
-    prod?.vars?.ACCESS_TEAM_DOMAIN ?? "",
-  ) ||
-  !real(prod?.vars?.ACCESS_TEAM_DOMAIN)
-)
-  errors.push("Set production ACCESS_TEAM_DOMAIN");
-if (!real(prod?.vars?.ACCESS_AUD)) errors.push("Set production ACCESS_AUD");
 const db = prod?.d1_databases?.find((binding) => binding.binding === "DB");
 if (
   !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(
@@ -43,5 +35,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  "Production configuration is ready. Ensure resources, Access policies, and Worker secrets exist before deploying.",
+  "Production configuration is ready. Ensure resources and Worker secrets exist before deploying.",
 );

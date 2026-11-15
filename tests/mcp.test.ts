@@ -129,52 +129,46 @@ test("MCP: auth, handshake, tool listing and the full Claude-driven workflow", a
   }
 });
 
-test("production: API needs a valid Cloudflare Access token, gateway routes are blocked, MCP still works", async () => {
-  const team = "rawatlogi-test.cloudflareaccess.com", aud = "aud-tag-123";
-  const keys = await crypto.subtle.generateKey(
-    { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
-    true,
-    ["sign", "verify"],
-  );
-  const jwk = { ...(await crypto.subtle.exportKey("jwk", keys.publicKey)), kid: "k1", alg: "RS256" };
-  const realFetch = globalThis.fetch;
-  globalThis.fetch = (async (input: any, init?: any) =>
-    String(input) === `https://${team}/cdn-cgi/access/certs`
-      ? new Response(JSON.stringify({ keys: [jwk] }))
-      : realFetch(input, init)) as typeof fetch;
-  const b64 = (v: unknown) => Buffer.from(typeof v === "string" ? v : JSON.stringify(v)).toString("base64url");
-  async function jwt(claims: Record<string, unknown>) {
-    const head = b64({ alg: "RS256", kid: "k1", typ: "JWT" }) + "." + b64(claims);
-    const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", keys.privateKey, new TextEncoder().encode(head));
-    return head + "." + Buffer.from(sig).toString("base64url");
-  }
-  const now = Math.floor(Date.now() / 1000);
-  const { mf, api, tool } = await setup("production", { ACCESS_TEAM_DOMAIN: team, ACCESS_AUD: aud });
+test("production: API is public, cross-site requests and local gateway routes stay blocked, MCP requires a token", async () => {
+  const { mf, api, tool, rpc } = await setup("production");
   try {
-    assert.equal((await api("/state")).status, 401);
-    const good = await jwt({ aud: [aud], iss: `https://${team}`, exp: now + 300, email: "owner@example.com" });
-    const ok = await api("/state", { headers: { "Cf-Access-Jwt-Assertion": good } });
-    assert.equal(ok.status, 200);
-    const wrongAud = await jwt({ aud: ["other"], iss: `https://${team}`, exp: now + 300 });
-    assert.equal((await api("/state", { headers: { "Cf-Access-Jwt-Assertion": wrongAud } })).status, 401);
-    const expired = await jwt({ aud: [aud], iss: `https://${team}`, exp: now - 10 });
-    assert.equal((await api("/state", { headers: { "Cf-Access-Jwt-Assertion": expired } })).status, 401);
-    const tampered = good.slice(0, -4) + (good.endsWith("AAAA") ? "BBBB" : "AAAA");
-    assert.equal((await api("/state", { headers: { "Cf-Access-Jwt-Assertion": tampered } })).status, 401);
+    assert.equal((await api("/state")).status, 200);
+    const created = await api("/records/product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Public Gel",
+        category: "Skincare",
+        affiliateUrl: url,
+      }),
+    });
+    assert.equal(created.status, 201);
+    assert.equal(
+      (await api("/state", { headers: { Origin: "https://other.example" } }))
+        .status,
+      403,
+    );
+    assert.equal(
+      (await api("/state", { headers: { "sec-fetch-site": "cross-site" } }))
+        .status,
+      403,
+    );
     const blocked = await api("/topics/generate", {
       method: "POST",
-      headers: { "Cf-Access-Jwt-Assertion": good, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: "{}",
     });
     assert.equal(blocked.status, 400);
     assert.match(blocked.body.error, /local app/);
-    assert.equal((await api("/runner/claim", { method: "POST", headers: { Authorization: "Bearer runner" } })).status, 400);
-    // MCP authenticates with its own bearer token, independent of Access.
-    const created = await tool("create_product", { name: "Cloud Gel", category: "Skincare", affiliateUrl: url });
-    assert.equal(created.isError, false, created.text);
-    assert.equal((await tool("queue_topic_suggestions", { kind: "research", productId: created.data.id })).isError, true);
+    assert.equal((await api("/runner/claim", { method: "POST" })).status, 400);
+    assert.equal((await rpc("tools/list", {}, "wrong-token")).status, 401);
+    const product = await tool("create_product", {
+      name: "Cloud Gel",
+      category: "Skincare",
+      affiliateUrl: url,
+    });
+    assert.equal(product.isError, false, product.text);
   } finally {
-    globalThis.fetch = realFetch;
     await mf.dispose();
   }
 });

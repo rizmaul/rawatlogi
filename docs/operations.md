@@ -54,4 +54,4 @@ JSON export version 2 includes products/evidence/posts, jobs, and sessions. It e
 
 ## Deployment later
 
-Cloudflare Workers, D1, and R2 remain the target platform. Provision actual resources, configure server-side identity/authorization and secrets, and provide an appropriate durable cloud worker/queue execution path before deployment. The current local-only guard must not be removed without replacing it with verified access control. No deployment is performed by local setup or dev commands.
+Cloudflare Workers, D1, and R2 remain the target platform. Provision actual resources, configure secrets, and provide an appropriate durable cloud worker/queue execution path before deployment. Production dashboard and API access is public; MCP requires its bearer token, and gateway generation remains local-only. No deployment is performed by local setup or dev commands.

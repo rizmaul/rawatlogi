@@ -9,7 +9,7 @@ import {
   finishSpecial,
 } from "./session-routes";
 import { imageContentType, MAX_IMAGE_BYTES } from "../shared/images";
-import { accessTokenFrom, isLocalRequest, verifyAccessToken } from "./auth";
+import { isLocalRequest } from "./auth";
 import { registerExternalSessionRoutes } from "./external-sessions";
 import { registerMcp } from "./mcp";
 import {
@@ -32,8 +32,6 @@ export type Env = {
   SETTINGS_ENCRYPTION_KEY?: string;
   BUCKET: R2Bucket;
   MCP_TOKEN?: string;
-  ACCESS_TEAM_DOMAIN?: string;
-  ACCESS_AUD?: string;
   // Set only by the MCP handler on internal sub-requests; never present on real requests.
   MCP_INTERNAL?: boolean;
 };
@@ -133,12 +131,6 @@ app.use("/api/*", async (c, next) => {
     )
       return c.json({ error: "Origin not allowed" }, 403);
   } else {
-    const user = await verifyAccessToken(accessTokenFrom(c.req.raw), c.env);
-    if (!user)
-      return c.json(
-        { error: "Cloudflare Access login required (or Access is not configured)." },
-        401,
-      );
     const origin = c.req.header("origin");
     if (origin && origin !== new URL(c.req.url).origin)
       return c.json({ error: "Origin not allowed" }, 403);
@@ -226,7 +218,8 @@ async function imageReferenced(db: D1Database, id: string) {
 // Delete images that no record references any more (e.g. replaced segment images).
 async function cleanupImages(env: Env, ids: (string | null | undefined)[]) {
   for (const id of new Set(ids.filter((v): v is string => !!v)))
-    if (!(await imageReferenced(env.DB, id))) await env.BUCKET?.delete("products/" + id);
+    if (!(await imageReferenced(env.DB, id)))
+      await env.BUCKET?.delete("products/" + id);
 }
 app.delete("/api/images/:id", async (c) => {
   const id = z.string().uuid().parse(c.req.param("id"));
@@ -306,15 +299,22 @@ async function validateLinks(
     return;
   }
   const brandPost = kind === "post" && !data.productId;
-  const p = brandPost ? null : await get<Product>(db, data.productId, "product");
+  const p = brandPost
+    ? null
+    : await get<Product>(db, data.productId, "product");
   if (kind === "evidence") return;
   for (const imageId of data.segmentImages ?? [])
     if (imageId && (!bucket || !(await bucket.head("products/" + imageId))))
       fail("A segment image is unavailable. Upload it again before saving.");
   if (brandPost) {
-    if (data.sourceIds.length) fail("Brand posts have no product, so they cannot cite product evidence.");
+    if (data.sourceIds.length)
+      fail(
+        "Brand posts have no product, so they cannot cite product evidence.",
+      );
     if (data.segments.some((s: string) => /https?:\/\/\S*shopee/i.test(s)))
-      fail("Brand posts cannot carry an affiliate link. Link the post to its product instead.");
+      fail(
+        "Brand posts cannot carry an affiliate link. Link the post to its product instead.",
+      );
     return;
   }
   if (!p!.data.confirmed && data.status !== "draft")
@@ -456,7 +456,8 @@ app.delete("/api/records/:kind/:id", async (c) => {
   await c.env.DB.prepare("DELETE FROM records WHERE id=? AND kind=?")
     .bind(id, kind)
     .run();
-  if (kind === "post") await cleanupImages(c.env, record.data.segmentImages ?? []);
+  if (kind === "post")
+    await cleanupImages(c.env, record.data.segmentImages ?? []);
   return c.json({ ok: true });
 });
 app.get("/api/research/search", async (c) => {
@@ -726,7 +727,11 @@ app.post("/api/runner/:id/finish", async (c) => {
       c.env.DB.prepare(
         "UPDATE sessions SET status='completed',progress='Drafts ready for review',result=?,error=NULL,updated_at=? WHERE job_id=? AND EXISTS(SELECT 1 FROM jobs WHERE id=? AND status='running' AND claim_token=?)",
       ).bind(
-        JSON.stringify({ postIds: ids, warnings: result.warnings, ...(body.execution ? {execution: body.execution} : {}) }),
+        JSON.stringify({
+          postIds: ids,
+          warnings: result.warnings,
+          ...(body.execution ? { execution: body.execution } : {}),
+        }),
         stamp,
         row.id,
         row.id,
@@ -736,7 +741,16 @@ app.post("/api/runner/:id/finish", async (c) => {
   statements.push(
     c.env.DB.prepare(
       "UPDATE jobs SET status='completed',result=?,claim_token=NULL,updated_at=? WHERE id=? AND status='running' AND claim_token=?",
-    ).bind(JSON.stringify({ postIds: ids, usage: body.usage ?? null, ...(body.execution ? {execution: body.execution} : {}) }), stamp, row.id, body.claimToken),
+    ).bind(
+      JSON.stringify({
+        postIds: ids,
+        usage: body.usage ?? null,
+        ...(body.execution ? { execution: body.execution } : {}),
+      }),
+      stamp,
+      row.id,
+      body.claimToken,
+    ),
   );
   await c.env.DB.batch(statements);
   return c.json({ ok: true, postIds: ids });

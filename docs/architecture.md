@@ -45,4 +45,4 @@ Main routes are `/`, `/products`, `/products/:id`, `/research`, `/studio`, `/cal
 
 The visual shell is shared React navigation with distinct URLs, direct reload support, browser Back/Forward, and real links for native new-tab/copy behavior. Unknown routes and missing products have not-found views. Backend assets and Vite provide the route fallback.
 
-See [API/session guide](api-sessions.md) for endpoint contracts, provider compatibility, research boundaries, and worker behavior. Production deployment still requires verified authentication/authorization; this build intentionally accepts only local hosts and local mode.
+See [API/session guide](api-sessions.md) for endpoint contracts, provider compatibility, research boundaries, and worker behavior. Production dashboard and API routes are public. Local mode remains limited to loopback hosts, and MCP requires its bearer token in both modes.

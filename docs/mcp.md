@@ -7,7 +7,7 @@ Rawatlogi exposes every app action as MCP tools at `/mcp`, so an AI client such 
 - Transport: MCP Streamable HTTP, stateless JSON responses (`POST /mcp`). `GET`/`DELETE` return 405.
 - Auth: `Authorization: Bearer <MCP_TOKEN>`. `npm run setup` generates `MCP_TOKEN` into ignored `.dev.vars`; it is never printed.
 - Every tool calls the existing `/api` routes internally, so validation is identical to the dashboard: approval rules, citation checks, affiliate-link/disclosure/length contract, and history protection.
-- Code: [worker/mcp.ts](../worker/mcp.ts) (tools), [worker/external-sessions.ts](../worker/external-sessions.ts) (saving AI-written sessions), [worker/auth.ts](../worker/auth.ts) (token and Cloudflare Access checks).
+- Code: [worker/mcp.ts](../worker/mcp.ts) (tools), [worker/external-sessions.ts](../worker/external-sessions.ts) (saving AI-written sessions), [worker/auth.ts](../worker/auth.ts) (MCP token and local-host checks).
 
 ## Connect Claude Code (local)
 
@@ -55,7 +55,7 @@ Deliberately not exposed: setting or removing the gateway API key, and the runne
 
 | | `APP_MODE=local` (`npm run dev`) | `APP_MODE=production` (`--env production`) |
 | --- | --- | --- |
-| Dashboard `/api/*` | loopback hosts only | valid Cloudflare Access JWT required; fails closed if Access is not configured |
+| Dashboard `/api/*` | loopback hosts only | public read/write access; no login required |
 | `/mcp` | loopback + bearer token | bearer token |
 | Gateway generation and runner | available | blocked (400): use the MCP save tools |
 
@@ -68,7 +68,7 @@ Nothing has been deployed. When you are ready:
 3. `npx wrangler r2 bucket create rawatlogi-prod-images`
 4. Set secrets (new values, not the local ones):
    `npx wrangler secret put MCP_TOKEN --env production` (32+ random characters) and `npx wrangler secret put SETTINGS_ENCRYPTION_KEY --env production` (32 random bytes, base64).
-5. Cloudflare Zero Trust → Access: create a self-hosted application for the Worker hostname with an Allow policy for your email. Add a second application for the path `/mcp` with a Bypass policy (MCP uses its own token). Copy the team domain (`<team>.cloudflareaccess.com`) and the application AUD tag into `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`. The exact dashboard menu names may differ (ASSUMPTION).
+5. Disable any Cloudflare Access rules protecting the Worker or hostname. The production dashboard and API are public; `/mcp` still requires its bearer token.
 6. `npm run deploy:prod`. It builds, applies D1 migrations remotely and deploys the `production` environment. `npm run deploy` is disabled on purpose.
 7. Connect Claude Code to `https://<your-worker-host>/mcp` with the production token.
 
