@@ -1,0 +1,36 @@
+<!-- @dsCard group="Social templates" width=1600 height=900 subtitle="X 1600×900 · example: Gel vs cream" -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap">
+<style>
+  .thumb { width: 1600px; height: 900px; box-sizing: border-box; padding: 84px 96px 72px; background: #fbf8f3; color: #16233a; font-family: "Plus Jakarta Sans", system-ui, sans-serif; display: flex; gap: 72px; align-items: center; position: relative; overflow: hidden; }
+  .copy { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 34px; }
+  .labels { display: flex; gap: 14px; }
+  .pill { font-size: 26px; font-weight: 700; padding: 8px 20px; border-radius: 999px; border: 3px solid transparent; }
+  .kulit { background: #f1dcc8; }
+  .concept { border-style: dashed; border-color: #6b778a; color: #4a5566; }
+  h1 { margin: 0; font-size: 104px; font-weight: 800; line-height: 1.02; letter-spacing: -0.03em; }
+  .sub { margin: 0; font-size: 44px; font-weight: 500; line-height: 1.3; color: #4a5566; }
+  .visual { width: 560px; flex-shrink: 0; display: flex; flex-direction: column; gap: 26px; }
+  .opt { display: flex; align-items: center; gap: 32px; padding: 36px 40px; border-radius: 28px; }
+  .gel { background: #d7eeea; border: 3px solid #0b6e65; }
+  .cream { background: #ffffff; border: 3px solid #d9a27e; }
+  .drop { width: 140px; height: 140px; border-radius: 50% 50% 50% 8%; transform: rotate(135deg); background: #9fd8cf; border: 4px solid #0b6e65; flex-shrink: 0; }
+  .jar { width: 140px; height: 140px; border-radius: 50%; background: #fffdf8; border: 4px solid #d9a27e; box-shadow: inset 0 -20px 0 #f1dcc8; flex-shrink: 0; }
+  .name { font-size: 58px; font-weight: 800; letter-spacing: -0.02em; }
+  .desc { font-size: 32px; font-weight: 500; color: #4a5566; }
+  .vs { align-self: center; font-size: 40px; font-weight: 800; color: #e4572e; }
+  .wm { position: absolute; left: 96px; bottom: 48px; font-size: 30px; font-weight: 800; letter-spacing: -0.03em; }
+  .wm span { color: #0b6e65; }
+</style>
+<div class="thumb">
+  <div class="copy">
+    <div class="labels"><span class="pill kulit">Kulit</span><span class="pill concept">Ilustrasi konsep</span></div>
+    <h1>Gel atau cream buat kulit kering?</h1>
+    <p class="sub">Bukan soal mana yang lebih tebal.</p>
+  </div>
+  <div class="visual" aria-hidden="true">
+    <div class="opt gel"><div class="drop"></div><div><div class="name">Gel</div><div class="desc">ringan, banyak air</div></div></div>
+    <div class="vs">vs</div>
+    <div class="opt cream"><div class="jar"></div><div><div class="name">Cream</div><div class="desc">lebih kaya, lebih menahan</div></div></div>
+  </div>
+  <div class="wm">rawat<span>logi</span></div>
+</div>

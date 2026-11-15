@@ -1,0 +1,35 @@
+<!-- @dsCard group="Brand" height=230 subtitle="Lockup, avatar, monogram" -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap">
+<style>
+  .wm-row { display: flex; align-items: center; gap: 48px; padding: 24px 32px; background: var(--paper, #fbf8f3); font-family: "Plus Jakarta Sans", system-ui, sans-serif; flex-wrap: wrap; }
+  .lockup { display: flex; align-items: center; gap: 18px; }
+  .lens { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+  .lens .ring { position: absolute; left: 0; top: 0; width: 48px; height: 48px; border-radius: 50%; border: 9px solid var(--teal, #0b6e65); box-sizing: border-box; }
+  .lens .handle { position: absolute; left: 39px; top: 43px; width: 26px; height: 10px; border-radius: 5px; background: var(--ink, #16233a); transform: rotate(45deg); transform-origin: left center; }
+  .lens .dot { position: absolute; left: 17px; top: 17px; width: 14px; height: 14px; border-radius: 50%; background: var(--coral, #e4572e); }
+  .word { font-size: 60px; font-weight: 800; letter-spacing: -0.035em; line-height: 1; color: var(--ink, #16233a); }
+  .word span { color: var(--teal, #0b6e65); }
+  .avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; background: #16233a; flex-shrink: 0; }
+  .avatar .ring { position: absolute; left: 28px; top: 26px; width: 46px; height: 46px; border-radius: 50%; border: 8px solid #3fb8a8; box-sizing: border-box; }
+  .avatar .handle { position: absolute; left: 65px; top: 66px; width: 24px; height: 9px; border-radius: 5px; background: #fbf8f3; transform: rotate(45deg); transform-origin: left center; }
+  .avatar .dot { position: absolute; left: 44px; top: 42px; width: 14px; height: 14px; border-radius: 50%; background: #e4572e; }
+  .mono { width: 112px; height: 112px; border-radius: var(--radius-lg, 28px); background: var(--teal, #0b6e65); color: var(--paper, #fbf8f3); display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 800; letter-spacing: -0.04em; flex-shrink: 0; }
+  .cap { font-size: 13px; font-weight: 500; color: var(--muted, #4a5566); margin-top: 8px; text-align: center; }
+</style>
+<div class="wm-row">
+  <div>
+    <div class="lockup" role="img" aria-label="rawatlogi lockup">
+      <div class="lens" aria-hidden="true"><div class="ring"></div><div class="handle"></div><div class="dot"></div></div>
+      <div class="word">rawat<span>logi</span></div>
+    </div>
+    <div class="cap">Lockup</div>
+  </div>
+  <div>
+    <div class="avatar" role="img" aria-label="Rawatlogi avatar"><div class="ring"></div><div class="handle"></div><div class="dot"></div></div>
+    <div class="cap">Avatar</div>
+  </div>
+  <div>
+    <div class="mono" role="img" aria-label="Rawatlogi monogram">rl</div>
+    <div class="cap">Monogram</div>
+  </div>
+</div>

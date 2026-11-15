@@ -1,0 +1,25 @@
+{
+  "v": 3,
+  "assetGroups": {},
+  "blobs": {},
+  "createdOnFiles": {
+    "at": "2026-11-14T10:30:00Z",
+    "v": 1
+  },
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "groups": [],
+  "lastChange": {
+    "at": "2026-11-14T10:30:00Z",
+    "by": "Claude",
+    "note": "First Rawatlogi system: tokens, brand book, social media and content playbooks, labels, wordmark, social templates.",
+    "via": "Claude Code"
+  },
+  "layout": "files",
+  "libraries": [],
+  "namespace": "Rawatlogi",
+  "sections": {},
+  "title": "Rawatlogi"
+}

@@ -1,0 +1,46 @@
+<!-- @dsCard group="Social templates" width=1600 height=900 subtitle="X 1600×900 · example: how moisturisers work" -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap">
+<style>
+  .ex { width: 1600px; height: 900px; box-sizing: border-box; padding: 72px 96px 56px; background: #fbf8f3; color: #16233a; font-family: "Plus Jakarta Sans", system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 32px; }
+  h1 { margin: 0; font-size: 72px; font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; }
+  .labels { display: flex; gap: 12px; flex-shrink: 0; }
+  .pill { font-size: 24px; font-weight: 700; padding: 7px 18px; border-radius: 999px; border: 3px solid transparent; }
+  .kulit { background: #f1dcc8; }
+  .concept { border-style: dashed; border-color: #6b778a; color: #4a5566; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; flex-grow: 1; }
+  .c { display: flex; flex-direction: column; justify-content: space-between; padding: 40px; border-radius: 28px; background: #ffffff; }
+  .c1 { background: #d7eeea; border: 3px solid #0b6e65; }
+  .c2 { border: 3px solid #d9a27e; }
+  .c3 { border: 3px solid #16233a; }
+  .n { font-size: 54px; font-weight: 800; letter-spacing: -0.02em; }
+  .d { font-size: 42px; font-weight: 500; line-height: 1.22; color: #4a5566; margin-top: 14px; }
+  .drops { display: flex; justify-content: space-around; padding: 0 30px; }
+  .drop { width: 34px; height: 34px; border-radius: 50% 50% 50% 0; transform: rotate(135deg); background: #0b6e65; }
+  .skin { height: 64px; border-radius: 14px; background: #f1dcc8; border: 3px solid #d9a27e; margin-top: 18px; }
+  .bricks { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 14px; background: #d9a27e; }
+  .bricks div { display: flex; gap: 8px; }
+  .bricks span { flex: 1; height: 38px; border-radius: 8px; background: #f1dcc8; }
+  .lid { height: 22px; border-radius: 11px; background: #16233a; }
+  .under { display: flex; justify-content: space-around; padding: 12px 40px; background: #f1dcc8; border: 3px solid #d9a27e; border-top: 0; border-radius: 0 0 14px 14px; }
+  .under span { width: 26px; height: 26px; border-radius: 50% 50% 50% 0; transform: rotate(135deg); background: #0b6e65; }
+  .bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+  .take { margin: 0; font-size: 42px; font-weight: 700; color: #0b6e65; }
+  .wm { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; }
+  .wm span { color: #0b6e65; }
+</style>
+<div class="ex">
+  <div class="top">
+    <h1>Pelembap kerja dengan 3 cara</h1>
+    <div class="labels"><span class="pill kulit">Kulit</span><span class="pill concept">Ilustrasi konsep</span></div>
+  </div>
+  <div class="grid">
+    <div class="c c1"><div><div class="n">Humectant</div><div class="d">Menarik air ke kulit</div></div><div aria-hidden="true"><div class="drops"><span class="drop"></span><span class="drop"></span><span class="drop"></span></div><div class="skin"></div></div></div>
+    <div class="c c2"><div><div class="n">Emollient</div><div class="d">Mengisi celah antarsel</div></div><div class="bricks" aria-hidden="true"><div><span></span><span></span><span></span></div><div style="padding: 0 30px"><span></span><span></span></div></div></div>
+    <div class="c c3"><div><div class="n">Occlusive</div><div class="d">Menahan air, kayak tutup panci</div></div><div aria-hidden="true"><div class="lid"></div><div class="under"><span></span><span></span><span></span></div></div></div>
+  </div>
+  <div class="bottom">
+    <p class="take">Kulit kering butuh lebih dari penarik air.</p>
+    <div class="wm">rawat<span>logi</span></div>
+  </div>
+</div>

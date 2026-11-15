@@ -1,0 +1,143 @@
+{
+  "evaluatedAt": "2026-11-10T12:26:30.078Z",
+  "model": "deepseek-v4.1-flash",
+  "effort": "max",
+  "note": "Live revised-flow smoke test, no approved evidence; results are not saved as posts. Earlier comparison exposed a Threads overflow. No conversion measurement.",
+  "context": {
+    "product": {
+      "name": "HANASUI Ceramide Probiotics Moisturizer Gel 100ml BIG SIZE",
+      "variant": "Big Ceramide Moist",
+      "category": "Skincare",
+      "affiliateUrl": "https://shopee.co.id/-BIG-SIZE-SAVE-40-HANASUI-Ceramide-Probiotics-Moisturizer-Gel-100ml-BIG-SIZE-Memperbaiki-Memperkuat-Skin-Barrier-Lembap-Terhidrasi-Hemat-Mencerahkan-Mengurangi-Flek-Hitam-Menenangkan-Kulit-Kemerahan-Benerin-Skin-Barrier-Dalam-14-Hari-i.129681299.28234426003?extraParams=%7B%22display_model_id%22%3A275177170440%2C%22model_selection_logic%22%3A3%7D&image_ids=id-11134207-7rbka-m8yt5rxyan7f98",
+      "manufacturerUrl": "",
+      "ingredients": "5X Ceramide, Galactomyces, 7X Hyaluronic Acid, Allantoin.",
+      "advertisedClaims": "• Memperbaiki dan memperkuat skin barrier.\n• Menenangkan kulit kemerahan dan kulit yang tampak merah/iritasi.\n• Melembapkan dan menghidrasi hingga 24 jam.\n• Mencerahkan dan mengurangi flek hitam dalam 14 hari.\n• Memperbaiki skin barrier dalam 14 hari.\n• Mendorong regenerasi kulit & perbaikan kulit (anti-aging effect).\n• Menjadikan kulit lebih kenyal & halus.\n• 10X Active untuk perlindungan skin barrier (tertera pada gambar layar).\n• Asal informasi: Judul, deskripsi produk, dan gambar promosi pada layar.",
+      "notes": "• Nama Toko: Hanasui Official Shop.\n• Petunjuk Penggunaan: Aplikasikan produk moisturizer secukupnya pada wajah yang bersih dan kering. Pijat bagian wajah dan leher sampai meresap sempurna.\n• No. Izin Edar (BPOM): NA18230106332.\n• Keterangan teks foto kecil/catatan kaki gambar: Teks catatan kaki ber-bintang pada infografis di gambar (\"*Hasil panelis 14 hari mencoba produk...\" dan \"**Berdasarkan penggunaan user selama 14 Hari\") berukuran sangat kecil dan agak kabur, tetapi menyatakan bahwa hasil pada setiap kulit dapat berbeda.\n• Asal informasi: Deskripsi produk, spesifikasi produk, dan gambar layar",
+      "price": 77509,
+      "commission": null,
+      "confirmed": true,
+      "imageId": "99353c4b-daf0-4b10-8b26-cd886ac96b5a"
+    },
+    "topic": {
+      "title": "Memilih varian pelembap tanpa asal checkout"
+    },
+    "guidance": "Tulis ramah dan mengundang, bantu pembaca membandingkan sebelum membeli.",
+    "approvedEvidence": []
+  },
+  "baseline": null,
+  "updated": {
+    "title": "Cek varian Hanasui Big Ceramide Moist 100 ml sebelum checkout",
+    "x": [
+      "Lagi pilih pelembap dan tertarik sama yang ukuran besar? Sebelum checkout, cocokkan dua hal di keranjang: varian Big Ceramide Moist dan isi 100 ml. Kalau di halaman ada beberapa pilihan, jangan cuma lihat foto depan—pastikan nama variannya ikut terbaca.",
+      "Cek variannya dulu, ya. Tautan afiliasi: https://shopee.co.id/-BIG-SIZE-SAVE-40-HANASUI-Ceramide-Probiotics-Moisturizer-Gel-100ml-BIG-SIZE-Memperbaiki-Memperkuat-Skin-Barrier-Lembap-Terhidrasi-Hemat-Mencerahkan-Mengurangi-Flek-Hitam-Menenangkan-Kulit-Kemerahan-Benerin-Skin-Barrier-Dalam-14-Hari-i.129681299.28234426003?extraParams=%7B%22display_model_id%22%3A275177170440%2C%22model_selection_logic%22%3A3%7D&image_ids=id-11134207-7rbka-m8yt5rxyan7f98"
+    ],
+    "threads": [
+      "Kalau kamu sedang membandingkan pelembap dan mempertimbangkan ukuran 100 ml, cek dulu varian yang benar-benar masuk keranjang. Di data produk ini tertulis Big Ceramide Moist dengan isi 100 ml. Cocokkan dua detail itu dengan yang muncul di halaman sebelum lanjut.",
+      "Kalau halaman toko menampilkan beberapa pilihan, jangan cuma melihat foto atau label besar di judul. Baca nama varian dan isi bersihnya, lalu bandingkan dengan yang kamu cari. Ukuran 100 ml bisa terasa praktis untuk stok, tapi pastikan kamu memang ingin varian itu, bukan cuma tergoda tulisan BIG SIZE.",
+      "Tautan afiliasi: https://shopee.co.id/-BIG-SIZE-SAVE-40-HANASUI-Ceramide-Probiotics-Moisturizer-Gel-100ml-BIG-SIZE-Memperbaiki-Memperkuat-Skin-Barrier-Lembap-Terhidrasi-Hemat-Mencerahkan-Mengurangi-Flek-Hitam-Menenangkan-Kulit-Kemerahan-Benerin-Skin-Barrier-Dalam-14-Hari-i.129681299.28234426003?extraParams=%7B%22display_model_id%22%3A275177170440%2C%22model_selection_logic%22%3A3%7D&image_ids=id-11134207-7rbka-m8yt5rxyan7f98"
+    ],
+    "sourceIds": [],
+    "warnings": [
+      "approvedEvidence kosong. Tidak ada klaim manfaat, keamanan, atau efektivitas yang bisa didukung; copy publik hanya membahas varian dan ukuran, bukan hasil pemakaian.",
+      "Klaim skin barrier, hidrasi 24 jam, pencerahan, dan pengurangan flek dalam 14 hari berasal dari judul/deskripsi penjual dan belum terverifikasi; klaim tersebut tidak dipakai sebagai fakta.",
+      "Catatan kaki pada gambar menyebut hasil tiap kulit dapat berbeda, tetapi teksnya kecil dan kurang jelas; informasi ini berasal dari listing dan belum diverifikasi.",
+      "Komposisi yang tercantum di listing adalah data penjual, bukan bukti efektivitas produk retail; copy tidak menggunakannya untuk klaim."
+    ]
+  },
+  "usage": [
+    {
+      "step": "writing",
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 2379,
+        "cache_read_input_tokens": 0,
+        "cached_tokens": 0,
+        "completion_thinking_tokens": 2224,
+        "completion_tokens": 2861,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "cached_tokens": 0,
+          "reasoning_tokens": 2224,
+          "rejected_prediction_tokens": 0
+        },
+        "credit": 0.48,
+        "input_tokens": 2379,
+        "output_tokens": 2861,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 2379,
+        "prompt_cache_write_tokens": 0,
+        "prompt_tokens": 2379,
+        "prompt_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "quota": null,
+        "total_tokens": 5240
+      },
+      "elapsedMs": 23684
+    },
+    {
+      "step": "writingEdit",
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 3230,
+        "cache_read_input_tokens": 0,
+        "cached_tokens": 0,
+        "completion_thinking_tokens": 8029,
+        "completion_tokens": 8789,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "cached_tokens": 0,
+          "reasoning_tokens": 8029,
+          "rejected_prediction_tokens": 0
+        },
+        "credit": 1.31,
+        "input_tokens": 3230,
+        "output_tokens": 8789,
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 3230,
+        "prompt_cache_write_tokens": 0,
+        "prompt_tokens": 3230,
+        "prompt_tokens_details": {
+          "accepted_prediction_tokens": 0,
+          "audio_tokens": 0,
+          "cached_tokens": 0,
+          "reasoning_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "quota": null,
+        "total_tokens": 12019
+      },
+      "elapsedMs": 56125
+    }
+  ],
+  "initialUpdated": {
+    "title": "Cek varian Hanasui Big Ceramide Moist 100 ml sebelum checkout",
+    "x": [
+      "Judulnya panjang, penuh klaim, dan ada tulisan BIG SIZE. Sebelum bayar, cocokkan dua hal di keranjang: varian Big Ceramide Moist dan isi 100 ml. Klaim di judul dan deskripsi tetap materi jualan, bukan jaminan hasil di kulitmu.",
+      "Mau cek variannya dulu? Tautan afiliasi: https://shopee.co.id/-BIG-SIZE-SAVE-40-HANASUI-Ceramide-Probiotics-Moisturizer-Gel-100ml-BIG-SIZE-Memperbaiki-Memperkuat-Skin-Barrier-Lembap-Terhidrasi-Hemat-Mencerahkan-Mengurangi-Flek-Hitam-Menenangkan-Kulit-Kemerahan-Benerin-Skin-Barrier-Dalam-14-Hari-i.129681299.28234426003?extraParams=%7B%22display_model_id%22%3A275177170440%2C%22model_selection_logic%22%3A3%7D&image_ids=id-11134207-7rbka-m8yt5rxyan7f98"
+    ],
+    "threads": [
+      "Nama produk ini panjang, dan tulisan BIG SIZE di judul menonjol. Sebelum checkout, cek varian yang terpilih: pastikan tertulis Big Ceramide Moist dan isinya 100 ml. Kalau pilihan varian di halaman toko berbeda, bandingkan dulu sebelum lanjut.",
+      "Klaim soal skin barrier, kelembapan 24 jam, sampai flek hitam dalam 14 hari itu berasal dari judul dan deskripsi penjual. Anggap sebagai materi jualan, bukan jaminan hasil. Catatan kecil di gambar juga menyebut hasil tiap kulit bisa berbeda.",
+      "Tautan afiliasi: https://shopee.co.id/-BIG-SIZE-SAVE-40-HANASUI-Ceramide-Probiotics-Moisturizer-Gel-100ml-BIG-SIZE-Memperbaiki-Memperkuat-Skin-Barrier-Lembap-Terhidrasi-Hemat-Mencerahkan-Mengurangi-Flek-Hitam-Menenangkan-Kulit-Kemerahan-Benerin-Skin-Barrier-Dalam-14-Hari-i.129681299.28234426003?extraParams=%7B%22display_model_id%22%3A275177170440%2C%22model_selection_logic%22%3A3%7D&image_ids=id-11134207-7rbka-m8yt5rxyan7f98"
+    ],
+    "sourceIds": [],
+    "warnings": [
+      "approvedEvidence kosong. Klaim memperbaiki skin barrier, melembapkan 24 jam, mencerahkan, dan mengurangi flek dalam 14 hari berasal dari judul/deskripsi penjual dan belum diverifikasi; jangan dianggap sebagai fakta atau hasil yang pasti.",
+      "Catatan kaki pada gambar menyebut hasil tiap kulit dapat berbeda, tetapi teksnya kecil dan kurang jelas; ini informasi listing yang belum diverifikasi.",
+      "approvedEvidence kosong. Tidak ada klaim manfaat, keamanan, atau hasil yang bisa diverifikasi; klaim skin barrier, hidrasi 24 jam, pencerahan, dan pengurangan flek dalam 14 hari adalah klaim penjual yang belum terverifikasi.",
+      "Catatan kaki pada gambar produk menyebut hasil tiap kulit dapat berbeda, tetapi teksnya kecil dan kurang jelas; informasi ini berasal dari listing dan belum diverifikasi.",
+      "Copy publik sengaja tidak menjanjikan efek apa pun dan hanya memakai data varian, ukuran, serta status klaim penjual sebagai konteks.",
+      "Belum ada bukti yang disetujui; draf tidak boleh memuat klaim manfaat atau efektivitas."
+    ]
+  },
+  "editorialIteration": "Human review requested less internal-audit language and no repetition of seller benefit claims in public copy."
+}

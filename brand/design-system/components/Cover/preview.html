@@ -1,0 +1,37 @@
+<!-- @dsCard height=288 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;800&display=swap">
+<style>
+  .cover { position: relative; width: 960px; height: 288px; background: var(--paper, #fbf8f3); overflow: hidden; font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
+  .cover svg { position: absolute; left: 480px; top: 0; width: 480px; height: 288px; }
+  .ink { fill: var(--ink, #16233a); }
+  .teal { fill: var(--teal, #0b6e65); }
+  .coral { fill: var(--coral, #e4572e); }
+  .tint { fill: var(--area-kulit, #f1dcc8); }
+  .blk { rx: var(--radius-lg, 28px); }
+  .ring { fill: none; stroke: var(--paper, #fbf8f3); stroke-width: 16px; }
+  .ring-teal { fill: none; stroke: var(--teal, #0b6e65); stroke-width: 16px; }
+  .txt { position: absolute; left: 40px; bottom: 36px; max-width: 440px; display: flex; flex-direction: column; gap: 8px; }
+  .name { margin: 0; font-size: 80px; font-weight: 800; line-height: 0.92; letter-spacing: -0.035em; color: var(--ink, #16233a); }
+  .tag { margin: 0; font-size: 14px; font-weight: 500; color: var(--muted, #4a5566); }
+</style>
+<div class="cover">
+  <!--
+    blocks: ink slab 176×256 (space-12 + space-8 + 16), teal 272×144, area-kulit tint 144×120, coral disc r48 (space-6)
+    arrangement: one tall ink slab with satellites bleeding off the top, right and bottom edges, the way the lens lockup sits beside the word
+    pattern row: literal motif (lens) -> rings from the radius scale; Rawatlogi "zooms in on a claim", so its pattern is the lens ring, not dots or stripes
+    steps and radii: space-2 16 (ring stroke), space-3 24 / space-4 32 (gaps), space-6 48 (disc), radius-lg 28 (block corners)
+  -->
+  <svg viewBox="0 0 480 288" aria-hidden="true">
+    <rect class="ink blk" x="0" y="32" width="176" height="288"></rect>
+    <rect class="teal blk" x="208" y="-28" width="300" height="172"></rect>
+    <rect class="tint blk" x="336" y="176" width="172" height="140"></rect>
+    <circle class="coral" cx="264" cy="224" r="48"></circle>
+    <circle class="ring" cx="88" cy="132" r="48"></circle>
+    <circle class="ring" cx="352" cy="64" r="40"></circle>
+    <circle class="ring-teal" cx="420" cy="240" r="32"></circle>
+  </svg>
+  <div class="txt">
+    <p class="name">Rawatlogi</p>
+    <p class="tag">Perawatan diri, pakai riset.</p>
+  </div>
+</div>
