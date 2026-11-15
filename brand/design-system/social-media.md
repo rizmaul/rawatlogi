@@ -46,15 +46,15 @@ Claim the handle on all platforms on the same day, even the ones you will start 
 | --- | --- | --- | --- |
 | **TikTok** | Discovery: new people find the account | 30–60s talking-head or green-screen over a diagram or label; "Mitos atau Riset?" checks; 3-point explainers | On-screen captions always (many watch muted). Hook in the first 2 seconds. A clickable bio link may need a business account or follower minimum (*unverified*). |
 | **Shopee** | Conversion: where the affiliate link pays | Affiliate links; **collections per area** (Rambut, Kulit, Gigi, Mata, Badan); Shopee Video reusing the TikTok cut; Shopee Live later | Each product in a collection gets one sentence on *why it is there* and its Level bukti. Affiliate programme rules and eligibility are *unverified*. |
-| **X** | Depth and conversation | 2–4 post threads with a 16:9 thumbnail and one explainer image (made in Fieldnote) | No hashtags. Reply to questions with the source. |
+| **X** | Depth and conversation | 2–4 post threads with a 16:9 thumbnail and one explainer image (made in Rawatlogi) | No hashtags. Reply to questions with the source. |
 | **Threads** (+ Instagram) | Warm, conversational reach | 4:5 carousels of 3–5 slides; flowing 1–3 segment posts | Same research as X, rewritten, not copy-pasted. Instagram reuses the carousels and TikTok videos as Reels. |
 | **Facebook** (later) | Older audience, sharing | Reels reused from TikTok; page posts reusing X threads | Start once the other four are steady. |
 
 ## One research → every platform
 
-1. **Fieldnote research session.** Find and approve the evidence. Approval sets the Level bukti.
-2. **Fieldnote writing session.** Produces the X thread and Threads post.
-3. **Post images.** Use the `fieldnote-post-image` skill: a thumbnail plus one explainer.
+1. **Rawatlogi research session.** Find and approve the evidence. Approval sets the Level bukti.
+2. **Rawatlogi writing session.** Produces the X thread and Threads post.
+3. **Post images.** Use the `rawatlogi-post-image` skill: a thumbnail plus one explainer.
 4. **TikTok script.** Follow the structure in the Content playbook, using the same facts.
 5. **Shopee.** Upload the same video as Shopee Video, and add the product to the area collection with its one-line reason.
 6. **Instagram and Facebook.** Reuse the carousel and Reel.

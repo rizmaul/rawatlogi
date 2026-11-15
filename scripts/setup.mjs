@@ -30,7 +30,7 @@ MCP_TOKEN="${randomBytes(32).toString("base64url")}"
 if (!existsSync("dist/index.html"))
   writeFileSync(
     "dist/index.html",
-    "<!doctype html><title>Fieldnote</title><p>Run npm run dev for the dashboard.</p>",
+    "<!doctype html><title>Rawatlogi</title><p>Run npm run dev for the dashboard.</p>",
   );
 const r = spawnSync(
   process.execPath,

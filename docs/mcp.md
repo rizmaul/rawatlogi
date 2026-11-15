@@ -1,8 +1,8 @@
-# MCP server: let Claude run Fieldnote
+# MCP server: let Claude run Rawatlogi
 
 **Classification: INTERNAL**
 
-Fieldnote exposes every app action as MCP tools at `/mcp`, so an AI client such as Claude Code can do the research and writing while Fieldnote stores and validates the results.
+Rawatlogi exposes every app action as MCP tools at `/mcp`, so an AI client such as Claude Code can do the research and writing while Rawatlogi stores and validates the results.
 
 - Transport: MCP Streamable HTTP, stateless JSON responses (`POST /mcp`). `GET`/`DELETE` return 405.
 - Auth: `Authorization: Bearer <MCP_TOKEN>`. `npm run setup` generates `MCP_TOKEN` into ignored `.dev.vars`; it is never printed.
@@ -11,15 +11,15 @@ Fieldnote exposes every app action as MCP tools at `/mcp`, so an AI client such 
 
 ## Connect Claude Code (local)
 
-The project already contains [.mcp.json](../.mcp.json), which registers `fieldnote` for Claude Code sessions opened in this folder. Its `headersHelper` runs [scripts/mcp-headers.mjs](../scripts/mcp-headers.mjs), which reads `MCP_TOKEN` from `.dev.vars` at connect time. The token is never copied into any config, and token rotation needs no re-registration. Start the app with `npm run dev`, open `claude` in this folder, and approve the `fieldnote` project server when prompted.
+The project already contains [.mcp.json](../.mcp.json), which registers `rawatlogi` for Claude Code sessions opened in this folder. Its `headersHelper` runs [scripts/mcp-headers.mjs](../scripts/mcp-headers.mjs), which reads `MCP_TOKEN` from `.dev.vars` at connect time. The token is never copied into any config, and token rotation needs no re-registration. Start the app with `npm run dev`, open `claude` in this folder, and approve the `rawatlogi` project server when prompted.
 
 Alternative (user-wide, stores the token in your Claude Code user config): run this in PowerShell from the project folder. It reads the token without showing it:
 
 ```powershell
-$t = (Select-String -Path .dev.vars -Pattern '^MCP_TOKEN="?([^"]+)"?').Matches[0].Groups[1].Value; claude mcp add --transport http --scope user fieldnote http://127.0.0.1:8787/mcp --header "Authorization: Bearer $t"
+$t = (Select-String -Path .dev.vars -Pattern '^MCP_TOKEN="?([^"]+)"?').Matches[0].Groups[1].Value; claude mcp add --transport http --scope user rawatlogi http://127.0.0.1:8787/mcp --header "Authorization: Bearer $t"
 ```
 
-Check it with `claude mcp list`. Then ask Claude, for example: "Use Fieldnote: research ceramide barrier evidence for the HANASUI product, then write an X and Threads draft."
+Check it with `claude mcp list`. Then ask Claude, for example: "Use Rawatlogi: research ceramide barrier evidence for the HANASUI product, then write an X and Threads draft."
 
 Claude Desktop: no built-in bearer-token option for remote servers was verified. A common route is an `mcp-remote` bridge with a header argument (ASSUMPTION, unverified for this setup).
 
@@ -64,8 +64,8 @@ Deliberately not exposed: setting or removing the gateway API key, and the runne
 Nothing has been deployed. When you are ready:
 
 1. `npx wrangler login`
-2. `npx wrangler d1 create fieldnote-prod`, then put the returned `database_id` in `wrangler.jsonc` under `env.production`.
-3. `npx wrangler r2 bucket create fieldnote-prod-images`
+2. `npx wrangler d1 create rawatlogi-prod`, then put the returned `database_id` in `wrangler.jsonc` under `env.production`.
+3. `npx wrangler r2 bucket create rawatlogi-prod-images`
 4. Set secrets (new values, not the local ones):
    `npx wrangler secret put MCP_TOKEN --env production` (32+ random characters) and `npx wrangler secret put SETTINGS_ENCRYPTION_KEY --env production` (32 random bytes, base64).
 5. Cloudflare Zero Trust → Access: create a self-hosted application for the Worker hostname with an Allow policy for your email. Add a second application for the path `/mcp` with a Bypass policy (MCP uses its own token). Copy the team domain (`<team>.cloudflareaccess.com`) and the application AUD tag into `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`. The exact dashboard menu names may differ (ASSUMPTION).
@@ -76,7 +76,7 @@ Nothing has been deployed. When you are ready:
 
 ## Post images with Claude Design
 
-The project skill `.claude/skills/fieldnote-post-image/SKILL.md` runs the whole flow:
+The project skill `.claude/skills/rawatlogi-post-image/SKILL.md` runs the whole flow:
 
 1. `get_image_brief` gathers the post, product photo, evidence, sizes and the editable **Post image designer** prompt (Settings → AI prompts).
 2. Claude designs one artboard per image on a Claude Design canvas. Images carry the public brand Rawatlogi (style defined in the prompt), not an organization design system.

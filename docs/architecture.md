@@ -1,6 +1,6 @@
 # Architecture and data reference
 
-Fieldnote uses React/TypeScript/Vite for the UI, Hono on Cloudflare Workers for the backend, D1 for structured data, R2 for uploaded product images, and a separate Node 24 API worker for generation.
+Rawatlogi uses React/TypeScript/Vite for the UI, Hono on Cloudflare Workers for the backend, D1 for structured data, R2 for uploaded product images, and a separate Node 24 API worker for generation.
 
 ```mermaid
 flowchart LR

@@ -11,9 +11,9 @@ import { areaKeys, areas, evidenceLevelKeys, evidenceLevels, series, seriesKeys 
 import { schemas as taskSchemas } from "../scripts/ai-tasks.mjs";
 
 const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
-const SERVER_INFO = { name: "fieldnote", title: "Fieldnote affiliate studio", version: "0.2.0" };
-const INSTRUCTIONS = `Fieldnote stores affiliate products, scientific evidence, research/writing sessions, X/Threads drafts and a WIB posting calendar.
-You (the AI client) do the thinking; Fieldnote stores and validates.
+const SERVER_INFO = { name: "rawatlogi", title: "Rawatlogi affiliate studio", version: "0.2.0" };
+const INSTRUCTIONS = `Rawatlogi stores affiliate products, scientific evidence, research/writing sessions, X/Threads drafts and a WIB posting calendar.
+You (the AI client) do the thinking; Rawatlogi stores and validates.
 Research: get_research_brief -> search_publications (real Europe PMC records) -> analyse ONLY those records -> save_research_session (cite sourceId values from the search). Then create_evidence for sources worth keeping.
 Writing: get_writing_brief -> write X and Threads segments following its instructions and budgets -> save_writing_session (validated: exact affiliate URL once per platform, disclosure, lengths, only approved evidence IDs).
 Approving evidence or posts and marking posts published should reflect the user's explicit decision. Nothing is posted to X/Threads automatically.
@@ -391,8 +391,8 @@ export const tools: Tool[] = [
         instructions: prompts.imageDesign,
         workflow: [
           "1. Pick images per segment (follow suggestion; at most 3).",
-          "2. Design them in Claude Design (Design artifact), one artboard per image at the exact size, in the Fieldnote style from the instructions.",
-          "3. Render each artboard to PNG at that size (scripts/render-image.mjs in the Fieldnote project).",
+          "2. Design them in Claude Design (Design artifact), one artboard per image at the exact size, in the Rawatlogi style from the instructions.",
+          "3. Render each artboard to PNG at that size (scripts/render-image.mjs in the Rawatlogi project).",
           "4. Attach each PNG: scripts/upload-segment-image.mjs <postId> <segmentIndex> <file.png> (or upload_post_segment_image with imageBase64 for small files).",
           "5. get_post to confirm segmentImages, then tell the user the alt text for each image.",
         ],
@@ -854,7 +854,7 @@ export function registerMcp(app: Hono<{ Bindings: Env }>) {
       return c.json(rpcError(null, -32001, "Origin not allowed"), 403);
     if (!(await mcpTokenValid(c.req.header("authorization"), c.env)))
       return c.json(rpcError(null, -32001, "Unauthorized: send Authorization: Bearer <MCP_TOKEN>."), 401, {
-        "WWW-Authenticate": 'Bearer realm="fieldnote-mcp"',
+        "WWW-Authenticate": 'Bearer realm="rawatlogi-mcp"',
       });
     let body: unknown;
     try {

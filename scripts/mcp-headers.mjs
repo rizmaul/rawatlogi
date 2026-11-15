@@ -1,4 +1,4 @@
-// Prints the Authorization header for the local Fieldnote MCP server (used by .mcp.json headersHelper).
+// Prints the Authorization header for the local Rawatlogi MCP server (used by .mcp.json headersHelper).
 // Reads MCP_TOKEN from .dev.vars at connect time so the token is never copied into other config files.
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";

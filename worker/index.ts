@@ -276,7 +276,7 @@ app.get("/api/export", async (c) => {
   ).all();
   c.header(
     "Content-Disposition",
-    'attachment; filename="fieldnote-backup.json"',
+    'attachment; filename="rawatlogi-backup.json"',
   );
   return c.json({
     schemaVersion: 2,
@@ -511,7 +511,7 @@ app.get("/api/research/search", async (c) => {
         term: query,
         retmode: "json",
         retmax: "12",
-        tool: "fieldnote-personal-studio",
+        tool: "rawatlogi-personal-studio",
       }).toString();
       const found = await fetch(searchUrl, {
         signal: AbortSignal.timeout(15000),
@@ -530,7 +530,7 @@ app.get("/api/research/search", async (c) => {
         db: "pubmed",
         id: ids.join(","),
         retmode: "json",
-        tool: "fieldnote-personal-studio",
+        tool: "rawatlogi-personal-studio",
       }).toString();
       const fetched = await fetch(summaryUrl, {
         signal: AbortSignal.timeout(15000),

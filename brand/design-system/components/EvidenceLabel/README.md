@@ -1,6 +1,6 @@
 The Level bukti pill, Rawatlogi's signature: it tells the reader how strong the research behind a post is.
 
-- **Consumer provides:** the level, taken from Fieldnote's evidence status (never from the product listing), and the size (`label` style).
+- **Consumer provides:** the level, taken from Rawatlogi's evidence status (never from the product listing), and the size (`label` style).
 - **Variants:**
   - **Riset kuat:** fill `evidence-strong`, text `on-evidence-strong`. Only for approved evidence from systematic reviews or several consistent trials.
   - **Riset terbatas:** 3px solid `evidence-strong` outline, `teal` text. For any other approved evidence.

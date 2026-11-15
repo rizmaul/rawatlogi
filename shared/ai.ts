@@ -215,7 +215,7 @@ async function callAIOnce(
     instructions + "\n" + suffix.split("{{schema}}").join(JSON.stringify(schema));
   const format =
     safe.outputFormat === "json_schema"
-      ? { type: "json_schema", name: "fieldnote_result", schema, strict: true }
+      ? { type: "json_schema", name: "rawatlogi_result", schema, strict: true }
       : { type: "json_object" };
   const body =
     safe.protocol === "responses"
@@ -242,7 +242,7 @@ async function callAIOnce(
               ? {
                   type: "json_schema",
                   json_schema: {
-                    name: "fieldnote_result",
+                    name: "rawatlogi_result",
                     schema,
                     strict: true,
                   },

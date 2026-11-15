@@ -32,7 +32,7 @@ async function setup(mode = "local", extra: Record<string, unknown> = {}) {
     MCP_TOKEN: TOKEN,
     ...extra,
   };
-  const host = mode === "local" ? "http://localhost" : "https://fieldnote.example.com";
+  const host = mode === "local" ? "http://localhost" : "https://rawatlogi.example.com";
   let id = 0;
   const rpc = async (method: string, params: unknown = {}, token = TOKEN) => {
     const r = await app.request(
@@ -130,7 +130,7 @@ test("MCP: auth, handshake, tool listing and the full Claude-driven workflow", a
 });
 
 test("production: API needs a valid Cloudflare Access token, gateway routes are blocked, MCP still works", async () => {
-  const team = "fieldnote-test.cloudflareaccess.com", aud = "aud-tag-123";
+  const team = "rawatlogi-test.cloudflareaccess.com", aud = "aud-tag-123";
   const keys = await crypto.subtle.generateKey(
     { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
     true,

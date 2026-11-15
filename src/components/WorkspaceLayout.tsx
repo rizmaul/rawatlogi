@@ -45,7 +45,7 @@ export function WorkspaceLayout({
           <span className="brand-icon">
             <Leaf size={23} />
           </span>
-          fieldnote<span className="brand-dot">.</span>
+          rawatlogi<span className="brand-dot">.</span>
         </AppLink>
         {/* Phone header actions (the desktop top bar is hidden on small screens). */}
         <div className="mobile-actions">

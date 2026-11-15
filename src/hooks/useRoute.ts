@@ -21,7 +21,7 @@ export function useRoute() {
       postNew: "New post",
     };
     document.title =
-      (route.notFound ? "Page not found" : titles[route.page]) + " — Fieldnote";
+      (route.notFound ? "Page not found" : titles[route.page]) + " — Rawatlogi";
   }, [route.page, route.selected, route.notFound]);
   useEffect(() => {
     const pop = () => setRoute(read());

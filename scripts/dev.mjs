@@ -36,5 +36,5 @@ run("api", "node_modules/wrangler/bin/wrangler.js", [
 run("web", "node_modules/vite/bin/vite.js", ["--host", "127.0.0.1"]);
 run("ai-worker", "scripts/runner.mjs");
 console.log(
-  "Fieldnote dashboard: http://127.0.0.1:5173 — close this process to stop the app.",
+  "Rawatlogi dashboard: http://127.0.0.1:5173 — close this process to stop the app.",
 );

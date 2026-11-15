@@ -95,7 +95,7 @@ function PostEditor({ workspace, record }: { workspace: Workspace; record?: Reco
       setSaving(false);
     }
   }
-  // Request text for Claude (with the Fieldnote MCP + fieldnote-post-image skill).
+  // Request text for Claude (with the Rawatlogi MCP + rawatlogi-post-image skill).
   function askClaude(segmentIndex?: number) {
     if (!record) return;
     const target =
@@ -103,7 +103,7 @@ function PostEditor({ workspace, record }: { workspace: Workspace; record?: Reco
         ? "the post (thumbnail for segment 1, explainer images where they help)"
         : `segment ${segmentIndex + 1} (segmentIndex ${segmentIndex})`;
     void copy(
-      `Use the fieldnote-post-image skill: design the image for ${target} of Fieldnote post ${record.id} ("${data.title}") in Claude Design, then attach it to the post.`,
+      `Use the rawatlogi-post-image skill: design the image for ${target} of Rawatlogi post ${record.id} ("${data.title}") in Claude Design, then attach it to the post.`,
     ).then(() => setNotice("Request copied. Paste it into Claude Code."));
   }
   async function remove() {

@@ -1,6 +1,6 @@
 # Content playbook
 
-**Classification: INTERNAL.** Every topic below still needs a research session in Fieldnote before any science claim is made. The Level bukti comes from that research, not from this list.
+**Classification: INTERNAL.** Every topic below still needs a research session in Rawatlogi before any science claim is made. The Level bukti comes from that research, not from this list.
 
 ## Five series
 
@@ -54,7 +54,7 @@ Spread across areas so the first-time visitor sees the full scope in one screen 
 | # | Area | Series | Topic |
 | --- | --- | --- | --- |
 | 1 | All | Intro | Apa itu Rawatlogi + arti label Level bukti (pin this) |
-| 2 | Kulit | Pilih yang Mana | Gel vs cream untuk kulit kering (drafted in Fieldnote) |
+| 2 | Kulit | Pilih yang Mana | Gel vs cream untuk kulit kering (drafted in Rawatlogi) |
 | 3 | Gigi & mulut | Cek Kandungan | Fluoride di pasta gigi |
 | 4 | Rambut | Mitos atau Riset? | Biotin dan rambut rontok |
 | 5 | Mata | Rutin Masuk Akal | Mata lelah depan layar: kebiasaan yang masuk akal |

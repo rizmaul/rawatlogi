@@ -1,4 +1,4 @@
-# Deploy Fieldnote to Cloudflare Workers
+# Deploy Rawatlogi to Cloudflare Workers
 
 Deploy the React assets and Hono API together as a Worker, with D1 and R2 bindings. This is a Workers project, not Cloudflare Pages.
 
@@ -14,8 +14,8 @@ Use Node 24 and run commands from the repository root.
 2. Create production resources:
 
    ```powershell
-   npx wrangler d1 create fieldnote-prod
-   npx wrangler r2 bucket create fieldnote-prod-images
+   npx wrangler d1 create rawatlogi-prod
+   npx wrangler r2 bucket create rawatlogi-prod-images
    ```
 
    R2 must be enabled on the account. Copy the returned D1 UUID into `env.production.d1_databases[0].database_id` in `wrangler.jsonc`. Resource names must match that configuration. Keep the local bindings separate.
@@ -29,7 +29,7 @@ Use Node 24 and run commands from the repository root.
 
    Generate independent values locally with `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"`. Use one value per secret. The encryption key must decode to 32 bytes; the MCP token must have at least 32 characters. Keep secure backups. Never commit keys or reuse local credentials. Rotating the encryption key prevents decrypting previously saved settings.
 5. Run `npm run check:production`, `npm run build`, `npm test`, and `npm run deploy:dry-run`.
-6. Run `npm run deploy`. It validates configuration, builds, applies remote D1 migrations, and deploys the `fieldnote` production Worker. Back up existing production data before schema changes. Verify dashboard login, `/api/health` after login, image upload, and MCP with the production token. Requests without credentials should fail.
+6. Run `npm run deploy`. It validates configuration, builds, applies remote D1 migrations, and deploys the `rawatlogi` production Worker. Back up existing production data before schema changes. Verify dashboard login, `/api/health` after login, image upload, and MCP with the production token. Requests without credentials should fail.
 
 The dry run bundles locally without deploying or applying migrations. It intentionally accepts placeholder resource IDs so CI can validate the bundle before account setup. `check:production` rejects placeholders before real deployments; it does not verify account resources, Access policies, or secret presence.
 
@@ -39,12 +39,12 @@ The repository uses `main`; generated builds, dependencies, local state, credent
 
 ```powershell
 git add .
-git commit -m "Prepare Fieldnote for Cloudflare Workers"
+git commit -m "Prepare Rawatlogi for Cloudflare Workers"
 git remote add origin <your-repository-url>
 git push -u origin main
 ```
 
-GitHub Actions validates builds, tests, and Worker bundling on pushes and pull requests without Cloudflare credentials. To deploy from Git, connect the repository in Cloudflare **Workers & Pages → fieldnote → Settings → Builds** after the first deployment. Configure production branch `main`, root directory `/`, build command `npm run build`, and deploy command `npm run check:production && npm run db:production && npx wrangler deploy --env production`. Use Node 24 (`NODE_VERSION=24` if needed). Ensure the build token can edit this Worker, D1, and R2. Disable non-production branch deployments until you configure isolated preview resources and authentication; do not point previews at production D1/R2.
+GitHub Actions validates builds, tests, and Worker bundling on pushes and pull requests without Cloudflare credentials. To deploy from Git, connect the repository in Cloudflare **Workers & Pages → rawatlogi → Settings → Builds** after the first deployment. Configure production branch `main`, root directory `/`, build command `npm run build`, and deploy command `npm run check:production && npm run db:production && npx wrangler deploy --env production`. Use Node 24 (`NODE_VERSION=24` if needed). Ensure the build token can edit this Worker, D1, and R2. Disable non-production branch deployments until you configure isolated preview resources and authentication; do not point previews at production D1/R2.
 
 Cloudflare resource IDs and Access audience/domain are configuration values and may be committed after setup. API tokens and Worker secrets must stay in Cloudflare or your secret store. Production secret upload is a separate operation from Git builds. To roll back application code, use Cloudflare Worker deployment history; code rollback does not undo D1 migrations.
 

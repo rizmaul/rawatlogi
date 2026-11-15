@@ -2,7 +2,7 @@
 
 **Classification: INTERNAL**
 
-Rawatlogi is the public brand (science-based personal care: hair, skin, teeth, eyes, body). Fieldnote is the internal studio app that produces its research, posts and images. This folder holds the brand's design system and Claude Design work, snapshotted from the claude.ai Artifacts on 14 November 2026.
+Rawatlogi is the brand and studio for science-based personal care: hair, skin, teeth, eyes, and body. The studio produces its research, posts, and images. This folder holds the brand's design system and Claude Design work, snapshotted from the claude.ai Artifacts on 14 November 2026.
 
 ## Contents
 
@@ -17,7 +17,7 @@ Rawatlogi is the public brand (science-based personal care: hair, skin, teeth, e
 
 ## Which copy is the truth
 
-- **The live design system Artifact is the source of truth.** The `fieldnote-post-image` skill reads it each time it designs an image, and the image-design prompt links to it.
+- **The live design system Artifact is the source of truth.** The `rawatlogi-post-image` skill reads it each time it designs an image, and the image-design prompt links to it.
 - **This folder is the version-controlled copy**, and the fallback when the Artifact can't be reached. The skill uses `brand/design-system/` when `Artifact` `read` fails.
 - After changing the brand on claude.ai, ask Claude to "sync the brand folder from the Artifacts". It re-reads each Artifact and overwrites these files.
 - Then run `npm run brand:tokens` to regenerate `tokens.css`.

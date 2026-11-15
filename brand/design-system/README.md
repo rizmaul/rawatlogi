@@ -1,4 +1,4 @@
-**Classification: INTERNAL** · Rawatlogi is the public brand. Fieldnote is the internal studio app that produces its research, posts and images.
+**Classification: INTERNAL** · Rawatlogi is the brand and studio that produces its research, posts, and images.
 
 Rawatlogi means *ilmu merawat diri*, the science of looking after yourself. It is a science-based personal-care account for Indonesian readers, covering hair, skin, teeth and mouth, eyes, and body and nails. It recommends products through affiliate links, but every recommendation starts with what the research actually says.
 
@@ -41,14 +41,14 @@ Rawatlogi means *ilmu merawat diri*, the science of looking after yourself. It i
 
 Three kinds of statements, three rules:
 1. **General science** (how skin, hair, teeth or eyes generally work): allowed as plain-language education, with no numbers, no study claims and no product outcomes.
-2. **Research findings:** only from evidence approved in Fieldnote. Retell them like a person and put the limitation next to the finding.
+2. **Research findings:** only from evidence approved in Rawatlogi. Retell them like a person and put the limitation next to the finding.
 3. **Product results:** never, unless approved evidence tested that exact product. Seller claims, BPOM numbers and product names are not evidence.
 
 Eyes and teeth sit close to medicine: talk about ingredients and habits, not diagnosis, prescription treatment or medicines.
 
 ## Level bukti (evidence level)
 
-Every post and image carries one `EvidenceLabel`. Pick it from the evidence status in Fieldnote, never from the product listing:
+Every post and image carries one `EvidenceLabel`. Pick it from the evidence status in Rawatlogi, never from the product listing:
 
 | Label | Use when | Token |
 | --- | --- | --- |
@@ -88,7 +88,7 @@ There are no drop shadows: separate surfaces with a `line` border.
 
 **Imagery.**
 - Flat illustration from simple shapes: drops, layers, bricks, a lid, a lens.
-- The product photo appears only as recorded in Fieldnote, never redrawn.
+- The product photo appears only as recorded in Rawatlogi, never redrawn.
 - No real faces, no before/after of skin, hair, teeth or eyes, no clinical close-ups, and no other brands' logos.
 - Every image carries an `AreaLabel` and an `EvidenceLabel` in a top corner, and the `Wordmark` small in a bottom corner.
 

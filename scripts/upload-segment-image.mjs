@@ -1,7 +1,7 @@
-// Attach a PNG/JPEG/WebP to one segment of a Fieldnote post through the MCP endpoint,
+// Attach a PNG/JPEG/WebP to one segment of a Rawatlogi post through the MCP endpoint,
 // without passing the image bytes through the AI's context.
 // Usage: node scripts/upload-segment-image.mjs <postId> <segmentIndex> <image file>
-// Env: FIELDNOTE_MCP_URL (default http://127.0.0.1:8787/mcp), FIELDNOTE_MCP_TOKEN (default: MCP_TOKEN in .dev.vars).
+// Env: RAWATLOGI_MCP_URL (default http://127.0.0.1:8787/mcp), RAWATLOGI_MCP_TOKEN (default: MCP_TOKEN in .dev.vars).
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,13 +12,13 @@ if (!postId || index === undefined || !file) {
   process.exit(2);
 }
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const url = process.env.FIELDNOTE_MCP_URL || "http://127.0.0.1:8787/mcp";
-let token = process.env.FIELDNOTE_MCP_TOKEN;
+const url = process.env.RAWATLOGI_MCP_URL || "http://127.0.0.1:8787/mcp";
+let token = process.env.RAWATLOGI_MCP_TOKEN;
 if (!token) {
   const vars = readFileSync(resolve(root, ".dev.vars"), "utf8");
   token = vars.match(/^MCP_TOKEN\s*=\s*"?([^"\r\n]+)"?/m)?.[1];
 }
-if (!token) throw new Error("No MCP token: set FIELDNOTE_MCP_TOKEN or run npm run setup.");
+if (!token) throw new Error("No MCP token: set RAWATLOGI_MCP_TOKEN or run npm run setup.");
 const bytes = readFileSync(resolve(file));
 if (bytes.length > 5 * 1024 * 1024) throw new Error("Image is larger than 5 MB.");
 const r = await fetch(url, {
