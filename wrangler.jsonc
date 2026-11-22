@@ -30,6 +30,8 @@
 			"bucket_name": "rawatlogi-product-images"
 		},
 	],
+	// Frontend-only previews until separate D1 and R2 resources are configured.
+	"previews": {},
 	// Cloud deployment (not deployed yet). See docs/cloudflare-deployment.md.
 	// Fill in database_id, set secrets with
 	// `wrangler secret put MCP_TOKEN --env production` (and SETTINGS_ENCRYPTION_KEY),
