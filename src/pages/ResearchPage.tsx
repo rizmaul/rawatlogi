@@ -1,4 +1,3 @@
-import { SessionList } from "../components/SessionList";
 import { ExternalLink, Plus } from "lucide-react";
 import { Tag } from "../components/ui";
 import { Pagination, usePaged } from "../components/Pager";
@@ -14,7 +13,6 @@ export function ResearchPage({ workspace }: { workspace: Workspace }) {
   const resultPage = usePaged(results, 10, results);
   return (
     <>
-      <SessionList workspace={workspace} kind="research" />
       {searched && (
         <>
           <div className="section-title">

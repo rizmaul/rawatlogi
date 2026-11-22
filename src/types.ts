@@ -1,11 +1,8 @@
-import type { Evidence, Job, Post, Product, RecordItem } from "../shared/model";
-import type { TopicSession } from "../shared/sessions";
+import type { Evidence, Post, Product, RecordItem } from "../shared/model";
 export type State = {
   products: RecordItem<Product>[];
   evidence: RecordItem<Evidence>[];
   posts: RecordItem<Post>[];
-  jobs: Job[];
-  sessions: TopicSession[];
 };
 export type Page =
   | "overview"
@@ -14,10 +11,6 @@ export type Page =
   | "studio"
   | "calendar"
   | "settings"
-  | "researchNew"
-  | "studioNew"
-  | "researchSession"
-  | "studioSession"
   | "post"
   | "postNew";
 export type Modal =

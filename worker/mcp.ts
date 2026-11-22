@@ -5,17 +5,16 @@ import type { Hono } from "hono";
 import type { Env } from "./index";
 import { isLocalRequest, mcpTokenValid } from "./auth";
 import { fromJakarta } from "../shared/model";
-import { taskInstructions, promptKeys, type PromptOverrides } from "../shared/prompts";
 import { writingBudgets } from "../shared/writing";
 import { areaKeys, areas, evidenceLevelKeys, evidenceLevels, series, seriesKeys } from "../shared/brand";
-import { schemas as taskSchemas } from "../scripts/ai-tasks.mjs";
 
 const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 const SERVER_INFO = { name: "rawatlogi", title: "Rawatlogi affiliate studio", version: "0.2.0" };
-const INSTRUCTIONS = `Rawatlogi stores affiliate products, scientific evidence, research/writing sessions, X/Threads drafts and a WIB posting calendar.
+const INSTRUCTIONS = `Rawatlogi stores affiliate products, scientific evidence, X/Threads drafts and a WIB posting calendar.
 You (the AI client) do the thinking; Rawatlogi stores and validates.
-Research: get_research_brief -> search_publications (real Europe PMC records) -> analyse ONLY those records -> save_research_session (cite sourceId values from the search). Then create_evidence for sources worth keeping.
-Writing: get_writing_brief -> write X and Threads segments following its instructions and budgets -> save_writing_session (validated: exact affiliate URL once per platform, disclosure, lengths, only approved evidence IDs).
+Discovery (also for first-time product lookups): get_discovery_brief -> inspect and synthesize multiple independent articles -> verify exact product facts, ingredients, claims, price and image from primary sources -> present candidates and ask for the user's selection and affiliateUrl -> create_product with the researched fields -> upload_product_image with productId -> get_product to verify the saved fields and image. Do not stop at product creation or silently omit image setup. Compare the existing catalog and search niche/premium alternatives when similar products exist.
+Research: get_research_brief -> first fill missing product facts through official product/packaging sources and update_product -> search real scientific publications (Europe PMC / PubMed) using your own web search -> analyse ONLY retrieved records -> create_evidence for each useful source with its claim, limitations and verdict (approved: false).
+Writing: get_writing_brief -> write X and Threads segments following its instructions and budgets -> save_drafts (validated: exact affiliate URL once per platform, disclosure, lengths, only approved evidence IDs).
 Approving evidence or posts and marking posts published should reflect the user's explicit decision. Nothing is posted to X/Threads automatically.
 Dates: scheduledAtJakarta uses "YYYY-MM-DDTHH:mm" in Asia/Jakarta (WIB).`;
 
@@ -94,16 +93,6 @@ const postSummary = (p: any) => ({
   scheduledAt: p.data.scheduledAt,
   firstSegment: p.data.segments[0],
 });
-const sessionSummary = (x: any) => ({
-  id: x.id,
-  kind: x.kind,
-  productId: x.productId,
-  title: x.topic.title,
-  status: x.status,
-  progress: x.progress,
-  error: x.error,
-  createdAt: x.createdAt,
-});
 async function update(ctx: Ctx, kind: "product" | "evidence" | "post", id: string, changes: Json) {
   const s = await state(ctx);
   const list = kind === "product" ? s.products : kind === "evidence" ? s.evidence : s.posts;
@@ -113,9 +102,6 @@ async function update(ctx: Ctx, kind: "product" | "evidence" | "post", id: strin
   if (kind === "post" && changes.segments && !changes.segmentImages)
     data.segmentImages = (record.data.segmentImages ?? []).slice(0, changes.segments.length);
   return ctx.call("PUT", `/api/records/${kind}/${id}`, { version: record.version, data });
-}
-async function promptOverrides(ctx: Ctx): Promise<PromptOverrides> {
-  return (await ctx.call("GET", "/api/settings/prompts")).overrides;
 }
 async function imageBytes(args: Json) {
   if (args.imageBase64) return base64Bytes(String(args.imageBase64));
@@ -154,7 +140,7 @@ const productFields = {
 const evidenceFields = {
   title: S.str("Publication title"),
   url: S.str("Publication URL"),
-  sourceId: S.str("Source ID from search_publications"),
+  sourceId: S.str("Publication source ID (e.g. PMC or PubMed ID)"),
   year: S.str("Year"),
   authors: S.str("Authors"),
   abstract: S.str("Abstract text"),
@@ -179,15 +165,6 @@ const postFields = {
   publishedUrl: S.str("Real published post URL (required for published)"),
   warnings: S.arr({ type: "string" }, "Review notes"),
 };
-const topicField = S.obj(
-  {
-    title: S.str("Topic title (3-300 chars)"),
-    question: S.str("Question or brief"),
-    searchQuery: S.str("English publication search terms"),
-    rationale: S.str("Why this topic is useful"),
-  },
-  ["title"],
-);
 function postChanges(args: Json) {
   const { scheduledAtJakarta, ...rest } = args;
   if (scheduledAtJakarta !== undefined) {
@@ -204,7 +181,7 @@ export const tools: Tool[] = [
   {
     name: "get_workspace_summary",
     title: "Workspace summary",
-    description: "Counts and the most recent products, sessions and scheduled posts.",
+    description: "Counts and the most recent products and scheduled posts.",
     inputSchema: S.obj({}),
     annotations: READ,
     async run(_, ctx) {
@@ -217,10 +194,8 @@ export const tools: Tool[] = [
           posts: s.posts.length,
           drafts: s.posts.filter((p: any) => p.data.status === "draft").length,
           scheduled: s.posts.filter((p: any) => p.data.scheduledAt && p.data.status !== "published").length,
-          sessions: s.sessions.length,
         },
         recentProducts: s.products.slice(0, 5).map((p: any) => productSummary(p, s)),
-        recentSessions: s.sessions.slice(0, 5).map(sessionSummary),
         upcomingPosts: s.posts
           .filter((p: any) => p.data.scheduledAt && p.data.status !== "published")
           .sort((a: any, b: any) => a.data.scheduledAt.localeCompare(b.data.scheduledAt))
@@ -247,7 +222,7 @@ export const tools: Tool[] = [
   {
     name: "get_product",
     title: "Get product",
-    description: "Full product record with its evidence, posts and sessions.",
+    description: "Full product record with its evidence and posts.",
     inputSchema: S.obj({ productId: S.str("Product ID") }, ["productId"]),
     annotations: READ,
     async run(args, ctx) {
@@ -257,17 +232,27 @@ export const tools: Tool[] = [
         ...p,
         evidence: s.evidence.filter((e: any) => e.data.productId === id),
         posts: s.posts.filter((x: any) => x.data.productId === id).map(postSummary),
-        sessions: s.sessions.filter((x: any) => x.productId === id).map(sessionSummary),
       };
     },
   },
   {
     name: "create_product",
     title: "Create product",
-    description: "Add a product. Unknown facts stay empty; do not infer ingredients from a name or link.",
+    description: "Add the selected product after user approval and receipt of their affiliate link. Include researched variant, manufacturerUrl, ingredients, advertisedClaims, price and source notes. Unknown facts stay empty; never infer ingredients. Then upload_product_image with the returned id and verify with get_product before reporting setup complete.",
     inputSchema: S.obj(productFields, ["name", "category", "affiliateUrl"]),
     annotations: WRITE,
-    run: (args, ctx) => ctx.call("POST", "/api/records/product", pick(args, Object.keys(productFields))),
+    async run(args, ctx) {
+      const product = await ctx.call("POST", "/api/records/product", pick(args, Object.keys(productFields)));
+      return {
+        ...product,
+        setup: {
+          imageStatus: product.data.imageId ? "attached" : "pending",
+          nextStep: product.data.imageId
+            ? "Call get_product to verify saved product facts and image."
+            : "Call upload_product_image with productId and the verified exact-variant photo (imageUrl or imageBase64), then get_product. If unavailable or upload fails, report image setup as pending and request a photo; do not create another product.",
+        },
+      };
+    },
   },
   {
     name: "update_product",
@@ -280,7 +265,7 @@ export const tools: Tool[] = [
   {
     name: "delete_product",
     title: "Delete product",
-    description: "Delete a product. Refused if it has evidence, posts or sessions.",
+    description: "Delete a product. Refused if it has evidence or posts.",
     inputSchema: S.obj({ productId: S.str("Product ID") }, ["productId"]),
     annotations: DELETE,
     run: (args, ctx) => ctx.call("DELETE", `/api/records/product/${encodeURIComponent(need(args, "productId"))}`),
@@ -333,14 +318,13 @@ export const tools: Tool[] = [
   {
     name: "get_image_brief",
     title: "Image brief for a post",
-    description: "Everything needed to design a post's images (thumbnail for segment 1, explainer/data images for segments 2-3): post segments and current images, product facts and photo ID, approved evidence for charts, recent research findings (unreviewed), suggested image per segment, sizes, and the saved image-design prompt. Design with Claude Design, render PNG, then attach with upload_post_segment_image (or scripts/upload-segment-image.mjs for large files).",
+    description: "Everything needed to design a post's images (thumbnail for segment 1, explainer/data images for segments 2-3): post segments and current images, product facts and photo ID, approved evidence for charts, recent research findings (unreviewed), suggested image per segment, and sizes. Design with Claude Design, render PNG, then attach with upload_post_segment_image (or scripts/upload-segment-image.mjs for large files).",
     inputSchema: S.obj({ postId: S.str("Post ID") }, ["postId"]),
     annotations: READ,
     async run(args, ctx) {
       const s = await state(ctx);
       const post = find(s.posts, need(args, "postId"), "Post");
       const p = post.data.productId ? find(s.products, post.data.productId, "Product") : null;
-      const prompts = taskInstructions(await promptOverrides(ctx));
       const science = /humectant|emollient|occlusive|ceramide|barrier|lapisan|studi|penelitian|riset|dibanding|\bvs\b|%|lemak|air/i;
       const segments = post.data.segments.map((text: string, index: number) => {
         const linkOnly = text.replace(/https?:\/\/\S+/g, "").trim().length < 60;
@@ -348,15 +332,6 @@ export const tools: Tool[] = [
           index === 0 ? "thumbnail" : linkOnly ? "none" : index <= 2 && science.test(text) ? "explainer" : "optional";
         return { index, text, currentImageId: post.data.segmentImages?.[index] ?? null, suggestion };
       });
-      const research = s.sessions
-        .filter((x: any) => x.kind === "research" && p && x.productId === p.id && x.status === "completed" && x.result?.findings)
-        .slice(0, 3)
-        .map((x: any) => ({
-          sessionId: x.id,
-          topic: x.topic.title,
-          findings: x.result.findings.map((f: any) => ({ claim: f.claim, confidence: f.confidence, limitations: f.limitations, sourceIds: f.sourceIds })),
-          sources: x.sources.map((src: any) => ({ sourceId: src.sourceId, title: src.title, year: src.year, authors: src.authors?.slice(0, 120), hasAbstract: !!src.abstract })),
-        }));
       return {
         post: {
           id: post.id,
@@ -384,14 +359,12 @@ export const tools: Tool[] = [
         approvedEvidence: s.evidence
           .filter((e: any) => p && e.data.productId === p.id && e.data.approved)
           .map((e: any) => ({ id: e.id, title: e.data.title, year: e.data.year, authors: e.data.authors, claim: e.data.claim, limitations: e.data.limitations })),
-        researchFindingsUnreviewed: research,
         sizes: post.data.platform === "x"
           ? { thumbnail: "1600x900", explainer: "1600x900 or 1200x1200" }
           : { thumbnail: "1080x1350", explainer: "1080x1350 or 1080x1080" },
-        instructions: prompts.imageDesign,
         workflow: [
           "1. Pick images per segment (follow suggestion; at most 3).",
-          "2. Design them in Claude Design (Design artifact), one artboard per image at the exact size, in the Rawatlogi style from the instructions.",
+          "2. Design them in Claude Design (Design artifact), one artboard per image at the exact size, in the Rawatlogi style.",
           "3. Render each artboard to PNG at that size (scripts/render-image.mjs in the Rawatlogi project).",
           "4. Attach each PNG: scripts/upload-segment-image.mjs <postId> <segmentIndex> <file.png> (or upload_post_segment_image with imageBase64 for small files).",
           "5. get_post to confirm segmentImages, then tell the user the alt text for each image.",
@@ -411,103 +384,121 @@ export const tools: Tool[] = [
     },
   },
   {
-    name: "search_publications",
-    title: "Search publications",
-    description: "Search Europe PMC (PubMed fallback) for real publications. Use English scientific terms. Returns up to 12 records with sourceId values to cite.",
-    inputSchema: S.obj({ query: S.str("English search query (3-300 chars)") }, ["query"]),
-    annotations: { readOnlyHint: true, openWorldHint: true },
-    run: (args, ctx) => ctx.call("GET", "/api/research/search?q=" + encodeURIComponent(need(args, "query"))),
-  },
-  {
-    name: "get_research_brief",
-    title: "Research brief",
-    description: "Everything needed to research a product: product facts, existing evidence, the saved research prompts and the report format for save_research_session.",
-    inputSchema: S.obj({ productId: S.str("Product ID") }, ["productId"]),
+    name: "get_discovery_brief",
+    title: "Indonesian market discovery brief",
+    description: "Start here for discovery or a first product lookup: broad article synthesis, full product facts, catalog comparison, niche/premium alternatives and product image setup.",
+    inputSchema: S.obj({
+      area: S.str("Optional Rawatlogi area", { enum: areaKeys }),
+      focus: S.str("Optional focus, e.g. 'viral product', 'ingredient trend', 'BPOM alert', 'brand post'"),
+    }),
     annotations: READ,
     async run(args, ctx) {
-      const s = await state(ctx), id = need(args, "productId");
-      const p = find(s.products, id, "Product");
-      const prompts = taskInstructions(await promptOverrides(ctx));
+      const s = await state(ctx);
+      const areaKey = typeof args.area === "string" && args.area in areas ? (args.area as keyof typeof areas) : null;
+      const focus = typeof args.focus === "string" && args.focus.trim() ? args.focus.trim() : "trending Indonesian products & ingredients";
+      const areaKeywords: Record<keyof typeof areas, string[]> = {
+        kulit: ["skincare viral Indonesia", "tren kandungan skincare", "rekomendasi pelembap sunscreen"],
+        rambut: ["haircare viral Indonesia", "tren perawatan rambut rontok ketombe", "shampoo serum rambut"],
+        gigi: ["pasta gigi viral Indonesia", "perawatan gigi mulut sensitif", "rekomendasi mouthwash"],
+        mata: ["tetes mata perawatan mata Indonesia", "kesehatan mata layar gadget"],
+        badan: ["bodycare viral Indonesia", "body lotion sabun mandi tren", "perawatan kuku kulit tubuh"],
+      };
       return {
-        product: { id: p.id, ...p.data },
-        existingEvidence: s.evidence.filter((e: any) => e.data.productId === id),
-        instructions: { queryPlanning: prompts.plan, analysis: prompts.research },
-        reportSchema: taskSchemas.research,
-        workflow: "Use search_publications, analyse only the returned records, cite their sourceId values, then call save_research_session with the same sources.",
+        area: areaKey ? { key: areaKey, ...areas[areaKey] } : "all",
+        focus,
+        existingProducts: s.products.map((p: any) => ({
+          id: p.id,
+          name: p.data.name,
+          variant: p.data.variant,
+          category: p.data.category,
+          confirmed: p.data.confirmed,
+          ingredients: p.data.ingredients,
+          advertisedClaims: p.data.advertisedClaims,
+          price: p.data.price,
+          posts: s.posts.filter((post: any) => post.data.productId === p.id).length,
+        })),
+        areas,
+        series,
+        searchHints: {
+          region: "Indonesia (id)",
+          sources: ["site:femaledaily.com", "site:beautyjournal.id", "site:kompas.com", "site:detik.com", "site:kumparan.com", "site:tempo.co", "site:antaranews.com", "site:cnnindonesia.com", "site:cnbcindonesia.com", "site:tirto.id", "site:liputan6.com", "site:suara.com", "site:popbela.com", "site:parapuan.co", "site:stylo.grid.id"],
+          primarySources: ["Official brand product pages and packaging", "Official Indonesian stores for exact-variant prices and photos", "site:cekbpom.pom.go.id"],
+          coverage: { targetArticles: 8, minimumIndependentDomains: 5, minimumArticlesPerCandidate: 2, preferredRecencyDays: 90 },
+          queries: areaKey ? areaKeywords[areaKey] : Object.values(areaKeywords).flat(),
+          alternativeQueries: [focus + " produk niche Indonesia", focus + " premium high end Indonesia", focus + " dermocosmetic official store Indonesia"],
+        },
+        productFactChecklist: ["name", "variant", "category", "manufacturerUrl", "ingredients", "advertisedClaims", "price", "commission", "notes", "image"],
+        instructions: [
+          "1. Search in Indonesian across multiple query angles and outlets, not just the first results. Target at least 8 inspected articles from 5 independent domains, preferably within 90 days. These are coverage targets, not permission to fabricate: disclose inaccessible pages, sparse coverage and older dates; never claim a trend based only on search snippets.",
+          "2. Deduplicate syndicated stories, press releases and repeated listicles; identify sponsored content. Build a shortlist of 3-5 products using at least 2 independent articles per candidate where available. Synthesize agreements, disagreements and dates across articles rather than copying the first article's recommendations. If coverage is insufficient, label the candidate tentative and explain the gap.",
+          "3. Compare candidates to existingProducts by use case, category, active ingredients and price, not name alone. Avoid exact duplicates. When similar products exist, run an additional search round for niche formulations, underserved use cases and premium/higher-priced alternatives. Include at least one differentiated niche or premium option when verified options exist, stating its closest catalog match and meaningful difference. Verify local availability and dated IDR price; higher price does not prove efficacy or commission. Never invent alternatives to meet a quota.",
+          "4. At the FIRST lookup, explicitly search each candidate's exact name/variant plus ingredients/INCI/komposisi, claims/manfaat, official brand page, size, price and product photo. Inspect official brand pages, packaging and official stores; use BPOM for registration checks where accessible, not as efficacy proof. Capture manufacturerUrl, full printed ingredients, advertisedClaims (unverified marketing), category, variant and dated price. Never borrow facts or photos from another variant or market. Record source URLs, access dates, conflicts and unavailable fields in notes. Commission stays null unless supplied or verified; never invent the affiliateUrl.",
+          "5. Present a cited comparison in Bahasa Indonesia: product/variant, ingredients and claims, price/date, why it merits a post, combined article evidence with URLs and publication dates, catalog overlap/differentiation, useful post angle and uncertainties. Distinguish popularity signals from scientific evidence. Ask the user which product to add and for their affiliateUrl.",
+          "6. After selection and affiliateUrl, create_product with ALL verified fields and source notes. Set confirmed true only if the user explicitly confirmed the exact product/variant; otherwise false. Then upload_product_image with productId using an exact-variant photo from the official brand/store (JPEG/PNG/WebP, max 5 MB). Record the image source URL in notes. Do not generate a substitute packaging photo. If blocked or unavailable, ask for a photo and clearly report image setup pending. Do not silently stop after create_product or duplicate the product on retry.",
+          "7. Call get_product to verify the saved fields and attached imageId. Report complete only after image attachment succeeds; otherwise report saved product plus pending image and missing facts. Never infer unknown ingredients or treat marketing claims as approved evidence.",
+          "8. For topics without a specific product, propose a brand post or research angle aligned with Rawatlogi's series.",
+        ],
       };
     },
   },
   {
-    name: "save_research_session",
-    title: "Save research session",
-    description: "Store a completed research session you wrote. Findings may cite only sourceId values present in sources; supported findings need a source. Findings are not approved claims.",
-    inputSchema: S.obj(
-      {
-        productId: S.str("Product ID"),
-        topic: topicField,
-        guidance: S.str("Guidance or scope"),
-        searchQuery: S.str("Query used"),
-        author: S.str("Who wrote it, e.g. 'Claude via MCP'"),
-        sources: S.arr({ type: "object" }, "Publication objects exactly as returned by search_publications (max 12)"),
-        report: S.obj(
-          {
-            summary: S.str("Briefing (Bahasa Indonesia)"),
-            findings: S.arr(
-              S.obj(
-                {
-                  claim: S.str("Finding"),
-                  sourceIds: S.arr({ type: "string" }, "Cited sourceId values"),
-                  confidence: S.str("Confidence", { enum: ["supported", "uncertain", "unsupported"] }),
-                  limitations: S.str("Limitations"),
-                },
-                ["claim", "sourceIds", "confidence", "limitations"],
-              ),
-              "Findings (max 20)",
-            ),
-            nextSteps: S.arr({ type: "string" }, "Next steps"),
-            warnings: S.arr({ type: "string" }, "Warnings"),
-          },
-          ["summary", "findings", "nextSteps", "warnings"],
-        ),
-      },
-      ["productId", "topic", "report"],
-    ),
-    annotations: WRITE,
-    run: (args, ctx) => ctx.call("POST", "/api/sessions/external", { kind: "research", ...args }),
+    name: "get_research_brief",
+    title: "Research brief",
+    description: "Product facts, existing evidence, and search/analysis prompt instructions so an external AI can search scientific literature itself and save directly via create_evidence.",
+    inputSchema: S.obj({
+      productId: S.str("Product ID"),
+      focus: S.str("Optional research focus, ingredient, or claim to investigate"),
+    }, ["productId"]),
+    annotations: READ,
+    async run(args, ctx) {
+      const s = await state(ctx), id = need(args, "productId");
+      const p = find(s.products, id, "Product");
+      const focus = typeof args.focus === "string" && args.focus.trim() ? args.focus.trim() : "active ingredients, advertised claims, and safety";
+      return {
+        product: { id: p.id, ...p.data },
+        focus,
+        existingEvidence: s.evidence.filter((e: any) => e.data.productId === id),
+        searchHints: {
+          sources: ["site:europepmc.org", "site:pubmed.ncbi.nlm.nih.gov", "site:pmc.ncbi.nlm.nih.gov"],
+          guidance: "Search in English using active ingredient names, INCI terms, and study types (systematic review, meta-analysis, randomized controlled trial).",
+        },
+        instructions: [
+          "1. Use your own web search to find real peer-reviewed publications (prefer Europe PMC or PubMed) for the product's active ingredients, advertised claims, or the requested focus. Avoid duplicating existingEvidence.",
+          "2. Never fabricate citations, abstracts, or numbers—only include publications you actually retrieved and inspected.",
+          "3. Write the report in Bahasa Indonesia, marking each finding's confidence ('supported', 'uncertain', 'unsupported') and explicit limitations (e.g. abstract-only, small sample, in-vitro).",
+          "4. Save useful retrieved publications directly with create_evidence, including title, sourceId, url, year, authors, abstract, studyType, access, narrow claim, limitations and verdict; approved must be false. Present your synthesis to the user with citations. No session is created.",
+          "5. For sources worth keeping long-term, call create_evidence (approved: false) so the user can review and approve them.",
+        ],
+      };
+    },
   },
   {
     name: "get_writing_brief",
     title: "Writing brief",
-    description: "Everything needed to write X/Threads drafts: product, approved evidence, the saved writer/editor prompts, platform budgets and the draft format for save_writing_session.",
+    description: "Everything needed to write X/Threads drafts: product, approved evidence, and platform budgets for save_drafts.",
     inputSchema: S.obj({ productId: S.str("Product ID") }, ["productId"]),
     annotations: READ,
     async run(args, ctx) {
       const s = await state(ctx), id = need(args, "productId");
       const p = find(s.products, id, "Product");
-      const prompts = taskInstructions(await promptOverrides(ctx));
       return {
         product: { id: p.id, ...p.data },
         productConfirmed: p.data.confirmed,
         approvedEvidence: s.evidence
           .filter((e: any) => e.data.productId === id && e.data.approved)
           .map((e: any) => ({ id: e.id, title: e.data.title, url: e.data.url, claim: e.data.claim, limitations: e.data.limitations, access: e.data.access })),
-        instructions: { writer: prompts.writing, editor: prompts.writingEdit },
         platformBudgets: writingBudgets(p.data.affiliateUrl),
-        draftSchema: taskSchemas.writing,
-        workflow: "Write a draft following the writer instructions, self-edit with the editor instructions, then call save_writing_session. sourceIds may only contain approvedEvidence ids.",
+        workflow: "Write X and Threads drafts within platformBudgets, then call save_drafts. sourceIds may only contain approvedEvidence ids.",
       };
     },
   },
   {
-    name: "save_writing_session",
-    title: "Save writing session",
-    description: "Store drafts you wrote as a completed writing session: creates one X and one Threads draft post. Validated for exact affiliate URL once per platform, affiliate disclosure in that segment, lengths, and approved evidence IDs. Product must be confirmed.",
+    name: "save_drafts",
+    title: "Save drafts",
+    description: "Save drafts directly: creates one X and one Threads draft post. Validated for exact affiliate URL once per platform, affiliate disclosure in that segment, lengths, and approved evidence IDs. Product must be confirmed.",
     inputSchema: S.obj(
       {
         productId: S.str("Product ID"),
-        topic: topicField,
-        guidance: S.str("Guidance used"),
-        author: S.str("Who wrote it"),
         draft: S.obj(
           {
             title: S.str("Internal title"),
@@ -522,10 +513,10 @@ export const tools: Tool[] = [
           ["title", "x", "threads", "sourceIds", "warnings", "area", "evidenceLevel", "series"],
         ),
       },
-      ["productId", "topic", "draft"],
+      ["productId", "draft"],
     ),
     annotations: WRITE,
-    run: (args, ctx) => ctx.call("POST", "/api/sessions/external", { kind: "writing", ...args }),
+    run: (args, ctx) => ctx.call("POST", "/api/drafts", { productId: args.productId, draft: args.draft }),
   },
   {
     name: "list_evidence",
@@ -608,7 +599,7 @@ export const tools: Tool[] = [
   {
     name: "create_post",
     title: "Create post",
-    description: "Create a single post manually. Leave productId empty for a brand post (no product, no affiliate link, no evidence). Prefer save_writing_session for product drafts.",
+    description: "Create a single post manually. Leave productId empty for a brand post (no product, no affiliate link, no evidence). Prefer save_drafts for product drafts.",
     inputSchema: S.obj({ productId: S.str("Product ID; empty for a brand post"), ...postFields }, ["title", "platform", "segments"]),
     annotations: WRITE,
     run: (args, ctx) =>
@@ -645,133 +636,6 @@ export const tools: Tool[] = [
         .sort((a: any, b: any) => a.data.scheduledAt.localeCompare(b.data.scheduledAt))
         .map(postSummary);
     },
-  },
-  {
-    name: "list_sessions",
-    title: "List sessions",
-    description: "Research and writing sessions.",
-    inputSchema: S.obj({
-      kind: S.str("Kind", { enum: ["research", "writing"] }),
-      productId: S.str("Product ID"),
-      status: S.str("Status", { enum: ["queued", "in_progress", "completed", "failed"] }),
-      ...page,
-    }),
-    annotations: READ,
-    async run(args, ctx) {
-      const s = await state(ctx);
-      return paged(
-        s.sessions
-          .filter(
-            (x: any) =>
-              (!args.kind || x.kind === args.kind) &&
-              (!args.productId || x.productId === args.productId) &&
-              (!args.status || x.status === args.status),
-          )
-          .map(sessionSummary),
-        args,
-      );
-    },
-  },
-  {
-    name: "get_session",
-    title: "Get session",
-    description: "Session with its report or drafts and retrieved sources.",
-    inputSchema: S.obj({ sessionId: S.str("Session ID") }, ["sessionId"]),
-    annotations: READ,
-    async run(args, ctx) {
-      const s = await state(ctx);
-      const session = find(s.sessions, need(args, "sessionId"), "Session");
-      const ids: string[] = session.result?.postIds ?? [];
-      return { ...session, posts: s.posts.filter((p: any) => ids.includes(p.id)) };
-    },
-  },
-  {
-    name: "list_jobs",
-    title: "List jobs",
-    description: "Recent jobs (latest 30), including sessions saved through MCP.",
-    inputSchema: S.obj({ status: S.str("Status", { enum: ["queued", "running", "completed", "failed"] }), ...page }),
-    annotations: READ,
-    async run(args, ctx) {
-      const s = await state(ctx);
-      return paged(
-        s.jobs
-          .filter((j: any) => !args.status || j.status === args.status)
-          .map((j: any) => ({ id: j.id, status: j.status, kind: j.payload.kind ?? "writing", productId: j.payload.productId, angle: j.payload.angle, error: j.error, createdAt: j.createdAt })),
-        args,
-      );
-    },
-  },
-  {
-    name: "queue_gateway_sessions",
-    title: "Queue gateway sessions (local only)",
-    description: "Queue research/writing sessions for the app's own API gateway worker. Local app only; needs the Node worker running and an API key.",
-    inputSchema: S.obj(
-      {
-        kind: S.str("Kind", { enum: ["research", "writing"] }),
-        productId: S.str("Product ID"),
-        guidance: S.str("Guidance"),
-        topics: S.arr(topicField, "1-10 topics"),
-      },
-      ["kind", "productId", "topics"],
-    ),
-    annotations: { ...WRITE, openWorldHint: true },
-    run: (args, ctx) => ctx.call("POST", "/api/sessions", args),
-  },
-  {
-    name: "queue_topic_suggestions",
-    title: "Queue topic suggestions (local only)",
-    description: "Ask the app's gateway model for topic suggestions; poll list_jobs for the result. Local app only.",
-    inputSchema: S.obj(
-      { kind: S.str("Kind", { enum: ["research", "writing"] }), productId: S.str("Product ID"), guidance: S.str("Guidance") },
-      ["kind", "productId"],
-    ),
-    annotations: { ...WRITE, openWorldHint: true },
-    run: (args, ctx) => ctx.call("POST", "/api/topics/generate", args),
-  },
-  {
-    name: "retry_session",
-    title: "Retry failed session (local only)",
-    description: "Re-queue a failed gateway session.",
-    inputSchema: S.obj({ sessionId: S.str("Session ID") }, ["sessionId"]),
-    annotations: WRITE,
-    run: (args, ctx) => ctx.call("POST", `/api/sessions/${encodeURIComponent(need(args, "sessionId"))}/retry`, {}),
-  },
-  {
-    name: "get_prompts",
-    title: "Get AI prompts",
-    description: "Default and customised prompts used by the app's gateway generation and the briefs.",
-    inputSchema: S.obj({}),
-    annotations: READ,
-    async run(_, ctx) {
-      const r = await ctx.call("GET", "/api/settings/prompts");
-      return promptKeys.map((k) => ({ key: k, ...r.info[k], custom: k in r.overrides, text: r.overrides[k] ?? r.defaults[k] }));
-    },
-  },
-  {
-    name: "update_prompts",
-    title: "Update AI prompts",
-    description: `Set prompt text by key (${promptKeys.join(", ")}). An empty string resets that prompt to its default. Other prompts are kept.`,
-    inputSchema: S.obj({ prompts: { type: "object", additionalProperties: { type: "string" }, description: "key -> text" } }, ["prompts"]),
-    annotations: WRITE,
-    async run(args, ctx) {
-      const changes = (args.prompts ?? {}) as Record<string, string>;
-      const unknown = Object.keys(changes).filter((k) => !promptKeys.includes(k as any));
-      if (unknown.length) throw new ToolError("Unknown prompt keys: " + unknown.join(", "));
-      const merged: Record<string, string> = { ...(await promptOverrides(ctx)) };
-      for (const [k, v] of Object.entries(changes)) {
-        if (typeof v !== "string" || !v.trim()) delete merged[k];
-        else merged[k] = v;
-      }
-      return ctx.call("PUT", "/api/settings/prompts", { prompts: merged });
-    },
-  },
-  {
-    name: "get_ai_settings",
-    title: "Get gateway AI settings",
-    description: "Gateway model settings (the API key is never returned).",
-    inputSchema: S.obj({}),
-    annotations: READ,
-    run: (_, ctx) => ctx.call("GET", "/api/settings/ai"),
   },
   {
     name: "export_workspace",

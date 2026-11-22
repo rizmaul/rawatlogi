@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { brandHashtags, evidenceLevelIssue } from "../shared/brand";
 import { writingContractIssues } from "../shared/writing";
 import { postSchema } from "../shared/model";
-import { taskInstructions } from "../shared/prompts";
 
 const url = "https://s.shopee.co.id/abc";
 const draft = {
@@ -32,15 +31,4 @@ test("approved posts cannot carry a riset label without sources; hashtags come f
   assert.equal(postSchema.safeParse({ ...base, evidenceLevel: "riset-terbatas" }).success, true); // drafts may hold it
   assert.equal(postSchema.safeParse({ ...base, evidenceLevel: "riset-terbatas", status: "approved" }).success, false);
   assert.deepEqual(brandHashtags({ area: "kulit", series: "pilih-yang-mana" }), ["#rawatlogi", "#pilihyangmana", "#skincareindonesia"]);
-});
-
-test("prompts carry the design system: areas, series, labels, eye/teeth rules, brand", () => {
-  const t = taskInstructions();
-  for (const s of ["Teliti", "Perawatan diri, pakai riset.", "mitos-atau-riset", "evidenceLevel", "Bukan saran medis", "gigi & mulut"])
-    assert.ok(t.writing.includes(s), s);
-  assert.ok(t.writingEdit.includes("LABELS rules"));
-  assert.ok(t.questions.includes("Seri:"));
-  assert.ok(t.research.includes("Level bukti kalau disetujui"));
-  assert.ok(t.imageDesign.includes("post.evidenceLevel"));
-  assert.ok(!/No hashtags\.$/m.test(t.writing));
 });

@@ -109,22 +109,6 @@ export type RecordItem<T> = {
   createdAt: string;
   updatedAt: string;
 };
-export type Job = {
-  id: string;
-  status: "queued" | "running" | "completed" | "failed";
-  createdAt: string;
-  updatedAt: string;
-  error: string | null;
-  result: string | null;
-  payload: {
-    productId: string;
-    angle: string;
-    kind?: "questions" | "research" | "writing" | "connection-test";
-    purpose?: "research" | "writing";
-    guidance?: string;
-    sessionId?: string;
-  };
-};
 export function limitFor(platform: "x" | "threads") {
   return platform === "x" ? 280 : 500;
 }

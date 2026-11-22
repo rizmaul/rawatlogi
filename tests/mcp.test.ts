@@ -76,22 +76,33 @@ test("MCP: auth, handshake, tool listing and the full Claude-driven workflow", a
     assert.ok(init.body.result.capabilities.tools);
     const list = await rpc("tools/list");
     const names = list.body.result.tools.map((t: any) => t.name);
-    for (const n of ["create_product", "save_research_session", "save_writing_session", "update_post", "update_prompts", "get_writing_brief"])
+    for (const n of ["create_product", "create_evidence", "save_drafts", "update_post", "get_discovery_brief", "get_writing_brief"])
       assert.ok(names.includes(n), n);
     assert.equal((await rpc("nope/method")).body.error.code, -32601);
 
-    const product = await tool("create_product", { name: "Test Gel", category: "Skincare", affiliateUrl: url });
+    const product = await tool("create_product", { name: "Test Gel", category: "Skincare", affiliateUrl: url, ingredients: "Aqua, Glycerin", advertisedClaims: "Moisturizes", price: 50000, manufacturerUrl: "https://brand.example.com/gel", notes: "Exact variant checked at official brand page" });
     assert.equal(product.isError, false);
+    assert.equal(product.data.setup.imageStatus, "pending");
     const productId = product.data.id;
+    const discovery = await tool("get_discovery_brief", { area: "kulit", focus: "viral product" });
+    assert.equal(discovery.isError, false, discovery.text);
+    assert.equal(discovery.data.area.key, "kulit");
+    assert.equal(discovery.data.existingProducts.length, 1);
+    assert.equal(discovery.data.existingProducts[0].ingredients, "Aqua, Glycerin");
+    assert.equal(discovery.data.existingProducts[0].advertisedClaims, "Moisturizes");
+    assert.equal(discovery.data.existingProducts[0].price, 50000);
+    assert.equal(discovery.data.existingProducts[0].posts, 0);
+    assert.ok(discovery.data.searchHints.sources.includes("site:femaledaily.com"));
+    assert.ok(Array.isArray(discovery.data.instructions) && discovery.data.instructions.length >= 5);
     // Writing requires a confirmed product.
-    assert.equal((await tool("save_writing_session", { productId, topic: { title: "Cek varian" }, draft })).isError, true);
+    assert.equal((await tool("save_drafts", { productId, topic: { title: "Cek varian" }, draft })).isError, true);
     await tool("update_product", { productId, confirmed: true });
     const brief = await tool("get_writing_brief", { productId });
-    assert.ok(brief.data.instructions.writer.includes("VOICE"));
+    assert.ok(brief.data.platformBudgets.x);
     assert.deepEqual(brief.data.approvedEvidence, []);
     // Invented evidence IDs and missing disclosure are rejected.
-    assert.equal((await tool("save_writing_session", { productId, topic: { title: "Cek varian" }, draft: { ...draft, sourceIds: ["fake"] } })).isError, true);
-    const writing = await tool("save_writing_session", { productId, topic: { title: "Cek varian" }, draft });
+    assert.equal((await tool("save_drafts", { productId, topic: { title: "Cek varian" }, draft: { ...draft, sourceIds: ["fake"] } })).isError, true);
+    const writing = await tool("save_drafts", { productId, topic: { title: "Cek varian" }, draft });
     assert.equal(writing.isError, false, writing.text);
     assert.equal(writing.data.postIds.length, 2);
 
@@ -102,34 +113,41 @@ test("MCP: auth, handshake, tool listing and the full Claude-driven workflow", a
     const calendar = await tool("get_calendar", { from: "2026-11-20", to: "2026-11-20" });
     assert.equal(calendar.data.length, 1);
 
-    const source = { title: "Ceramide trial", sourceId: "PMC1", url: "https://europepmc.org/article/PMC/PMC1", year: "2024", authors: "A", abstract: "Abstract", studyType: "RCT" };
-    const report = { summary: "Ringkasan", findings: [{ claim: "Klaim", sourceIds: ["PMC9"], confidence: "supported", limitations: "Kecil" }], nextSteps: [], warnings: [] };
-    assert.equal((await tool("save_research_session", { productId, topic: { title: "Ceramide barrier" }, sources: [source], report })).isError, true);
-    report.findings[0].sourceIds = ["PMC1"];
-    const research = await tool("save_research_session", { productId, topic: { title: "Ceramide barrier" }, sources: [source], report });
-    assert.equal(research.isError, false, research.text);
-    const session = await tool("get_session", { sessionId: research.data.sessionId });
-    assert.equal(session.data.status, "completed");
-    assert.equal(session.data.result.author, "Claude via MCP");
+    const researchBrief = await tool("get_research_brief", { productId, focus: "ceramide barrier" });
+    assert.equal(researchBrief.isError, false, researchBrief.text);
+    assert.ok(researchBrief.data.searchHints.sources.includes("site:europepmc.org"));
+    assert.ok(Array.isArray(researchBrief.data.instructions) && researchBrief.data.instructions.length >= 5);
 
-    const prompts = await tool("update_prompts", { prompts: { plan: "Custom plan" } });
-    assert.deepEqual(prompts.data.overrides, { plan: "Custom plan" });
-    await tool("update_prompts", { prompts: { plan: "" } });
-    assert.equal((await tool("get_prompts")).data.find((p: any) => p.key === "plan").custom, false);
+    const evidence = await tool("create_evidence", { productId, title: "Ceramide trial", url: "https://europepmc.org/article/PMC/PMC1", sourceId: "PMC1", claim: "Narrow finding", limitations: "Small trial", verdict: "supported", approved: false });
+    assert.equal(evidence.isError, false, evidence.text);
+    const saved = await tool("get_product", { productId });
+    assert.equal(saved.data.evidence.length, 1);
+    assert.equal(saved.data.evidence[0].data.approved, false);
+    assert.equal(saved.data.sessions, undefined);
+    const snapshot = await tool("export_workspace");
+    assert.equal(snapshot.data.sessions.length, 0);
+    assert.equal(snapshot.data.jobs.length, 0);
+    for (const removed of ["save_research_session", "save_writing_session", "list_sessions", "get_session", "list_jobs"])
+      assert.equal(names.includes(removed), false, removed);
 
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
     const image = await tool("upload_product_image", { productId, imageBase64: png.toString("base64") });
     assert.equal(image.isError, false, image.text);
     assert.equal(image.data.product.data.imageId, image.data.image.id);
+    const savedProduct = await tool("get_product", { productId });
+    assert.equal(savedProduct.data.data.imageId, image.data.image.id);
+    assert.equal(savedProduct.data.data.ingredients, "Aqua, Glycerin");
+    assert.equal(savedProduct.data.data.manufacturerUrl, "https://brand.example.com/gel");
+    const alreadyIllustrated = await tool("create_product", { name: "Other Gel", category: "Skincare", affiliateUrl: url, imageId: image.data.image.id });
+    assert.equal(alreadyIllustrated.isError, false, alreadyIllustrated.text);
+    assert.equal(alreadyIllustrated.data.setup.imageStatus, "attached");
     assert.equal((await tool("delete_product", { productId })).isError, true);
-    const settings = await tool("get_ai_settings");
-    assert.equal(settings.data.apiKey, undefined);
   } finally {
     await mf.dispose();
   }
 });
 
-test("production: API is public, cross-site requests and local gateway routes stay blocked, MCP requires a token", async () => {
+test("production: API is public, cross-site requests stay blocked, MCP requires a token", async () => {
   const { mf, api, tool, rpc } = await setup("production");
   try {
     assert.equal((await api("/state")).status, 200);
@@ -153,14 +171,6 @@ test("production: API is public, cross-site requests and local gateway routes st
         .status,
       403,
     );
-    const blocked = await api("/topics/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{}",
-    });
-    assert.equal(blocked.status, 400);
-    assert.match(blocked.body.error, /local app/);
-    assert.equal((await api("/runner/claim", { method: "POST" })).status, 400);
     assert.equal((await rpc("tools/list", {}, "wrong-token")).status, 401);
     const product = await tool("create_product", {
       name: "Cloud Gel",
@@ -202,7 +212,7 @@ test("segment images: validated, protected while used, cleaned up when replaced"
   }
 });
 
-test("image brief: segment suggestions, product photo, image prompt; get_image returns image content", async () => {
+test("image brief: segment suggestions, product photo; get_image returns image content", async () => {
   const { mf, rpc, tool } = await setup();
   try {
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64").toString("base64");
@@ -219,7 +229,7 @@ test("image brief: segment suggestions, product photo, image prompt; get_image r
     assert.deepEqual(brief.data.post.segments.map((s: any) => s.suggestion), ["thumbnail", "explainer", "none"]);
     assert.equal(brief.data.product.photoImageId, photo.data.image.id);
     assert.equal(brief.data.sizes.thumbnail, "1600x900");
-    assert.match(brief.data.instructions, /Ilustrasi konsep/);
+    assert.match(brief.data.post.labelNote, /Ilustrasi konsep/);
     const { body } = await rpc("tools/call", { name: "get_image", arguments: { imageId: photo.data.image.id } });
     assert.equal(body.result.content[0].type, "image");
     assert.equal(body.result.content[0].mimeType, "image/png");
@@ -245,6 +255,27 @@ test("brand posts: no product, no affiliate link, no evidence; approvable withou
     const brief = await tool("get_image_brief", { postId: post.data.id });
     assert.equal(brief.isError, false, brief.text);
     assert.match(brief.data.product.note, /Brand post/);
+  } finally {
+    await mf.dispose();
+  }
+});
+
+
+test("retired sessions do not prevent product deletion and remain in backups", async () => {
+  const { mf, env, tool, api } = await setup();
+  try {
+    const product = await tool("create_product", { name: "Legacy product", category: "Skincare", affiliateUrl: url });
+    const productId = product.data.id;
+    await env.DB.prepare("INSERT INTO jobs(id,status,payload,created_at,updated_at) VALUES('legacy-job','completed','{}','2026-11-18','2026-11-18')").run();
+    await env.DB.prepare("INSERT INTO sessions(id,kind,product_id,topic,status,job_id,result,created_at,updated_at) VALUES('legacy-session','research',?,'{}','completed','legacy-job','{\"summary\":\"Keep this research\"}','2026-11-18','2026-11-18')").bind(productId).run();
+    for (const statement of (await readFile(new URL("../migrations/0003_archive_sessions.sql", import.meta.url), "utf8")).split(";").map((s) => s.trim()).filter(Boolean))
+      await env.DB.prepare(statement).run();
+    const deleted = await api("/records/product/" + productId, { method: "DELETE" });
+    assert.equal(deleted.status, 200, JSON.stringify(deleted.body));
+    const backup = await tool("export_workspace");
+    assert.equal(backup.data.sessions[0].product_id, productId);
+    assert.equal(JSON.parse(backup.data.sessions[0].result).summary, "Keep this research");
+    assert.equal(backup.data.jobs.length, 1);
   } finally {
     await mf.dispose();
   }

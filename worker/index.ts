@@ -1,22 +1,14 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z, ZodError } from "zod";
-import { ProviderError } from "../shared/ai";
-import {
-  readSessions,
-  registerSessionRoutes,
-  finishBodySchema,
-  finishSpecial,
-} from "./session-routes";
 import { imageContentType, MAX_IMAGE_BYTES } from "../shared/images";
 import { isLocalRequest } from "./auth";
-import { registerExternalSessionRoutes } from "./external-sessions";
+import { registerDraftRoutes } from "./drafts";
 import { registerMcp } from "./mcp";
 import {
   productSchema,
   evidenceSchema,
   postSchema,
-  draftResultSchema,
   type Product,
   type Evidence,
   type Post,
@@ -27,9 +19,6 @@ export type Env = {
   DB: D1Database;
   ASSETS: Fetcher;
   APP_MODE: string;
-  LOCAL_RUNNER_TOKEN: string;
-  OPENAI_API_KEY?: string;
-  SETTINGS_ENCRYPTION_KEY?: string;
   BUCKET: R2Bucket;
   MCP_TOKEN?: string;
   // Set only by the MCP handler on internal sub-requests; never present on real requests.
@@ -71,7 +60,6 @@ const fail = (message: string) => {
   throw new HTTPException(400, { message });
 };
 app.onError((err, c) => {
-  if (err instanceof ProviderError) return c.json({ error: err.message }, 502);
   if (err instanceof ZodError)
     return c.json(
       {
@@ -89,31 +77,10 @@ app.onError((err, c) => {
     500,
   );
 });
-// Gateway generation needs the local Node worker, so these routes are local-only.
-const LOCAL_ONLY = [
-  /^POST \/api\/jobs$/,
-  /^POST \/api\/jobs\/[^/]+\/retry$/,
-  /^POST \/api\/topics\/generate$/,
-  /^POST \/api\/sessions$/,
-  /^POST \/api\/sessions\/[^/]+\/retry$/,
-  /^POST \/api\/settings\/ai\/test$/,
-  /^[A-Z]+ \/api\/runner\//,
-];
 app.use("/api/*", async (c, next) => {
   const mode = c.env.APP_MODE;
   if (mode !== "local" && mode !== "production")
     return c.json({ error: "APP_MODE must be local or production." }, 503);
-  if (
-    mode === "production" &&
-    LOCAL_ONLY.some((r) => r.test(`${c.req.method} ${c.req.path}`))
-  )
-    return c.json(
-      {
-        error:
-          "Gateway generation runs only in the local app. In the cloud, use MCP tools (save_research_session / save_writing_session).",
-      },
-      400,
-    );
   c.header("Cache-Control", "no-store");
   if (c.env.MCP_INTERNAL === true) return next();
   if (mode === "local") {
@@ -228,37 +195,12 @@ app.delete("/api/images/:id", async (c) => {
   return c.json({ deleted: true });
 });
 app.get("/api/state", async (c) => {
-  const [products, evidence, posts, jobs] = await Promise.all([
+  const [products, evidence, posts] = await Promise.all([
     list<Product>(c.env.DB, "product"),
     list<Evidence>(c.env.DB, "evidence"),
     list<Post>(c.env.DB, "post"),
-    c.env.DB.prepare(
-      "SELECT id,status,created_at,updated_at,error,result,payload FROM jobs ORDER BY created_at DESC LIMIT 30",
-    ).all<{
-      id: string;
-      status: string;
-      created_at: string;
-      updated_at: string;
-      error: string | null;
-      result: string | null;
-      payload: string;
-    }>(),
   ]);
-  return c.json({
-    products,
-    evidence,
-    posts,
-    sessions: await readSessions(c.env.DB),
-    jobs: jobs.results.map((j) => ({
-      id: j.id,
-      status: j.status,
-      createdAt: j.created_at,
-      updatedAt: j.updated_at,
-      error: j.error,
-      result: j.result,
-      payload: JSON.parse(j.payload),
-    })),
-  });
+  return c.json({ products, evidence, posts });
 });
 app.get("/api/export", async (c) => {
   const records = await c.env.DB.prepare(
@@ -276,7 +218,7 @@ app.get("/api/export", async (c) => {
     exportedAt: now(),
     records: records.results,
     jobs: jobs.results,
-    sessions: await readSessions(c.env.DB),
+    sessions: (await c.env.DB.prepare("SELECT * FROM sessions ORDER BY created_at").all()).results,
   });
 });
 const schemas = {
@@ -423,13 +365,6 @@ app.delete("/api/records/:kind/:id", async (c) => {
   if (!Object.keys(schemas).includes(kind)) throw new HTTPException(404);
   const record = await get<any>(c.env.DB, id, kind);
   if (kind === "product") {
-    const session = await c.env.DB.prepare(
-      "SELECT id FROM sessions WHERE product_id=? LIMIT 1",
-    )
-      .bind(id)
-      .first();
-    if (session)
-      fail("This product has linked sessions. Preserve it for traceability.");
     const [e, p] = await Promise.all([
       list<Evidence>(c.env.DB, "evidence"),
       list<Post>(c.env.DB, "post"),
@@ -566,195 +501,7 @@ app.get("/api/research/search", async (c) => {
     }
   }
 });
-app.post("/api/jobs", async (c) => {
-  const request = z
-    .object({
-      productId: z.string(),
-      angle: z.string().trim().min(3).max(2000),
-    })
-    .parse(await c.req.json());
-  const product = await get<Product>(c.env.DB, request.productId, "product");
-  if (!product.data.confirmed) fail("Confirm the product and variant first.");
-  const evidence = (await list<Evidence>(c.env.DB, "evidence")).filter(
-    (e) => e.data.productId === product.id && e.data.approved,
-  );
-  const running = await c.env.DB.prepare(
-    "SELECT id FROM jobs WHERE status IN ('queued','running') AND json_extract(payload,'$.productId')=?",
-  )
-    .bind(product.id)
-    .first();
-  if (running)
-    throw new HTTPException(409, {
-      message: "A draft job for this product is already queued or running.",
-    });
-  const id = crypto.randomUUID(),
-    stamp = now();
-  await c.env.DB.prepare(
-    "INSERT INTO jobs(id,status,payload,created_at,updated_at) VALUES(?,?,?,?,?)",
-  )
-    .bind(
-      id,
-      "queued",
-      JSON.stringify({ ...request, product, evidence }),
-      stamp,
-      stamp,
-    )
-    .run();
-  return c.json({ id, status: "queued" }, 202);
-});
-app.post("/api/jobs/:id/retry", async (c) => {
-  const r = await c.env.DB.prepare(
-    "UPDATE jobs SET status='queued',error=NULL,claim_token=NULL,updated_at=? WHERE id=? AND status='failed'",
-  )
-    .bind(now(), c.req.param("id"))
-    .run();
-  if (!r.meta.changes) fail("Only a failed job can be retried.");
-  await c.env.DB.prepare(
-    "UPDATE sessions SET status='queued',progress='Waiting for API worker',error=NULL,updated_at=? WHERE job_id=?",
-  )
-    .bind(now(), c.req.param("id"))
-    .run();
-  return c.json({ ok: true });
-});
-app.use("/api/runner/*", async (c, next) => {
-  if (
-    !c.env.LOCAL_RUNNER_TOKEN ||
-    c.req.header("Authorization") !== `Bearer ${c.env.LOCAL_RUNNER_TOKEN}`
-  )
-    return c.json({ error: "Runner authentication required" }, 401);
-  await next();
-});
-registerSessionRoutes(app);
-registerExternalSessionRoutes(app);
-app.post("/api/runner/claim", async (c) => {
-  const cutoff = new Date(Date.now() - 15 * 60000).toISOString();
-  await c.env.DB.prepare(
-    "UPDATE jobs SET status='failed',error='Runner stopped or timed out. Retry this job.',claim_token=NULL,updated_at=? WHERE status='running' AND updated_at<?",
-  )
-    .bind(now(), cutoff)
-    .run();
-  await c.env.DB.prepare(
-    "UPDATE sessions SET status='failed',progress='Worker timed out',error='Worker stopped or timed out. Retry this session.',updated_at=? WHERE status='in_progress' AND job_id IN(SELECT id FROM jobs WHERE status='failed')",
-  )
-    .bind(now())
-    .run();
-  const row = await c.env.DB.prepare(
-    "SELECT id,payload FROM jobs WHERE status='queued' ORDER BY created_at LIMIT 1",
-  ).first<{ id: string; payload: string }>();
-  if (!row) return c.json({ job: null });
-  const token = crypto.randomUUID();
-  const r = await c.env.DB.prepare(
-    "UPDATE jobs SET status='running',claim_token=?,updated_at=? WHERE id=? AND status='queued'",
-  )
-    .bind(token, now(), row.id)
-    .run();
-  if (r.meta.changes)
-    await c.env.DB.prepare(
-      "UPDATE sessions SET status='in_progress',progress='Preparing API request',updated_at=? WHERE job_id=?",
-    )
-      .bind(now(), row.id)
-      .run();
-  return c.json({
-    job: r.meta.changes
-      ? { id: row.id, claimToken: token, payload: JSON.parse(row.payload) }
-      : null,
-  });
-});
-app.post("/api/runner/:id/finish", async (c) => {
-  const body = finishBodySchema.parse(await c.req.json());
-  const row = await c.env.DB.prepare(
-    "SELECT id,payload FROM jobs WHERE id=? AND status='running' AND claim_token=?",
-  )
-    .bind(c.req.param("id"), body.claimToken)
-    .first<{ id: string; payload: string }>();
-  if (!row)
-    throw new HTTPException(409, {
-      message: "Job is no longer owned by this runner",
-    });
-  if (body.error) {
-    await c.env.DB.prepare(
-      "UPDATE sessions SET status='failed',progress='Needs attention',error=?,updated_at=? WHERE job_id=? AND EXISTS(SELECT 1 FROM jobs WHERE id=? AND status='running' AND claim_token=?)",
-    )
-      .bind(body.error, now(), row.id, row.id, body.claimToken)
-      .run();
-    await c.env.DB.prepare(
-      "UPDATE jobs SET status='failed',error=?,claim_token=NULL,updated_at=? WHERE id=? AND claim_token=?",
-    )
-      .bind(body.error, now(), row.id, body.claimToken)
-      .run();
-    return c.json({ ok: true });
-  }
-  if (!body.result) fail("Missing result");
-  const payload = JSON.parse(row.payload);
-  if (
-    payload.kind === "questions" ||
-    payload.kind === "research" ||
-    payload.kind === "connection-test"
-  )
-    return c.json(await finishSpecial(c.env, row, payload, body));
-  const result = draftResultSchema.parse(body.result);
-  const allowed = new Set(payload.evidence.map((e: any) => e.id));
-  if (result.sourceIds.some((id) => !allowed.has(id)))
-    fail("Generated result cited an unknown source.");
-  const stamp = now(),
-    ids = [crypto.randomUUID(), crypto.randomUUID()];
-  const statements = (["x", "threads"] as const).map((platform, index) => {
-    const data = postSchema.parse({
-      productId: payload.productId,
-      title: result.title,
-      platform,
-      segments: result[platform],
-      sourceIds: result.sourceIds,
-      status: "draft",
-      warnings: result.warnings,
-      area: result.area ?? null,
-      evidenceLevel: result.evidenceLevel ?? null,
-      series: result.series ?? null,
-    });
-    return c.env.DB.prepare(
-      "INSERT INTO records(id,kind,data,created_at,updated_at) SELECT ?,'post',?,?,? WHERE EXISTS (SELECT 1 FROM jobs WHERE id=? AND status='running' AND claim_token=?)",
-    ).bind(
-      ids[index],
-      JSON.stringify(data),
-      stamp,
-      stamp,
-      row.id,
-      body.claimToken,
-    );
-  });
-  if (payload.sessionId)
-    statements.push(
-      c.env.DB.prepare(
-        "UPDATE sessions SET status='completed',progress='Drafts ready for review',result=?,error=NULL,updated_at=? WHERE job_id=? AND EXISTS(SELECT 1 FROM jobs WHERE id=? AND status='running' AND claim_token=?)",
-      ).bind(
-        JSON.stringify({
-          postIds: ids,
-          warnings: result.warnings,
-          ...(body.execution ? { execution: body.execution } : {}),
-        }),
-        stamp,
-        row.id,
-        row.id,
-        body.claimToken,
-      ),
-    );
-  statements.push(
-    c.env.DB.prepare(
-      "UPDATE jobs SET status='completed',result=?,claim_token=NULL,updated_at=? WHERE id=? AND status='running' AND claim_token=?",
-    ).bind(
-      JSON.stringify({
-        postIds: ids,
-        usage: body.usage ?? null,
-        ...(body.execution ? { execution: body.execution } : {}),
-      }),
-      stamp,
-      row.id,
-      body.claimToken,
-    ),
-  );
-  await c.env.DB.batch(statements);
-  return c.json({ ok: true, postIds: ids });
-});
+registerDraftRoutes(app);
 app.all("/api/*", (c) => c.json({ error: "Endpoint not found" }, 404));
 registerMcp(app);
 app.get("*", (c) => c.env.ASSETS.fetch(c.req.raw));

@@ -5,6 +5,7 @@ import {
   PenLine,
   Plus,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { Tag } from "../components/ui";
 import { Pagination, usePaged } from "../components/Pager";
@@ -62,13 +63,24 @@ export function ProductDetailPage({ workspace }: { workspace: Workspace }) {
             Open affiliate link <ExternalLink size={14} />
           </a>
         </div>
-        <button
-          className="secondary"
-          onClick={() => setModal({ kind: "product", record: product })}
-        >
-          <PenLine size={15} />
-          Edit details
-        </button>
+        <div className="row">
+          <button
+            className="secondary"
+            onClick={() => setModal({ kind: "product", record: product })}
+          >
+            <PenLine size={15} />
+            Edit details
+          </button>
+          <button
+            type="button"
+            className="text-btn danger"
+            disabled={workspace.busy}
+            onClick={() => workspace.remove("product", product)}
+          >
+            <Trash2 size={15} />
+            Delete product
+          </button>
+        </div>
       </div>
       <div className="detail-layout">
         <div>

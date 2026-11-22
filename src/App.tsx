@@ -8,8 +8,6 @@ import { ProductsPage } from "./pages/ProductsPage";
 import { ResearchPage } from "./pages/ResearchPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { StudioPage } from "./pages/StudioPage";
-import { NewSessionPage } from "./pages/NewSessionPage";
-import { SessionPage } from "./pages/SessionPage";
 import { PostPage } from "./pages/PostPage";
 export function App() {
   const workspace = useWorkspace();
@@ -20,10 +18,6 @@ export function App() {
     studio: StudioPage,
     calendar: CalendarPage,
     settings: SettingsPage,
-    researchNew: NewSessionPage,
-    studioNew: NewSessionPage,
-    researchSession: SessionPage,
-    studioSession: SessionPage,
     post: PostPage,
     postNew: PostPage,
   };

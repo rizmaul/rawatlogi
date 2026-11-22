@@ -4,8 +4,6 @@ export const emptyState: State = {
   products: [],
   evidence: [],
   posts: [],
-  jobs: [],
-  sessions: [],
 };
 export const rupiah = (n: number | null) =>
   n === null
