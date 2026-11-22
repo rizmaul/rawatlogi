@@ -7,7 +7,7 @@ Rawatlogi exposes every app action as MCP tools at `/mcp`, so an AI client such 
 - Transport: MCP Streamable HTTP, stateless JSON responses (`POST /mcp`). `GET`/`DELETE` return 405.
 - Auth: `Authorization: Bearer <MCP_TOKEN>`. `npm run setup` generates `MCP_TOKEN` into ignored `.dev.vars`; it is never printed.
 - Every tool calls the existing `/api` routes internally, so validation is identical to the dashboard: approval rules, citation checks, affiliate-link/disclosure/length contract, and history protection.
-- Code: [worker/mcp.ts](../worker/mcp.ts) (tools), [worker/external-sessions.ts](../worker/external-sessions.ts) (saving AI-written sessions), [worker/auth.ts](../worker/auth.ts) (MCP token and local-host checks).
+- Code: [worker/mcp.ts](../worker/mcp.ts) (tools), [worker/drafts.ts](../worker/drafts.ts) (saving drafts directly), [worker/auth.ts](../worker/auth.ts) (MCP token and local-host checks).
 
 ## Connect Claude Code (local)
 
@@ -31,16 +31,20 @@ Rotate the token by deleting the `MCP_TOKEN` line from `.dev.vars`, running `npm
 | --- | --- |
 | Overview | `get_workspace_summary` |
 | Products | `list_products`, `get_product`, `create_product`, `update_product`, `delete_product`, `upload_product_image` |
-| Research (Claude thinks) | `get_research_brief` → `search_publications` → `save_research_session` → `create_evidence` / `update_evidence` |
-| Writing (Claude thinks) | `get_writing_brief` → `save_writing_session` (creates one X and one Threads draft) |
+| Discovery / first product lookup | `get_discovery_brief` → client web search and product fact verification → user selection + affiliate link → `create_product` → `upload_product_image` → `get_product` |
+| Research (Claude thinks) | `get_research_brief` → verify missing product facts with client web search → `update_product` → client literature search → `create_evidence` → `create_evidence` / `update_evidence` |
+| Writing (Claude thinks) | `get_writing_brief` → `save_drafts` (creates one X and one Threads draft) |
 | Posts and calendar | `list_posts`, `get_post`, `create_post`, `update_post` (edit, `scheduledAtJakarta`, `segmentImages`, approve, mark published), `delete_post`, `get_calendar`, `upload_post_segment_image` (image for one segment) |
-| Sessions and jobs | `list_sessions`, `get_session`, `list_jobs` |
-| Post images (Claude Design) | `get_image_brief` (segments with thumbnail/explainer suggestions, product photo ID, evidence, sizes, the "Post image designer" prompt), `get_image` (returns a stored image as image content), `upload_post_segment_image` |
-| Prompts and settings | `get_prompts`, `update_prompts`, `get_ai_settings` |
-| Gateway generation (local only) | `queue_gateway_sessions`, `queue_topic_suggestions`, `retry_session` |
+| Post images (Claude Design) | `get_image_brief` (segments with thumbnail/explainer suggestions, product photo ID, evidence, sizes), `get_image` (returns a stored image as image content), `upload_post_segment_image` |
 | Backup | `export_workspace` |
 
-The briefs include the prompts saved in Settings (writer, editor, voice, research), the JSON format and the platform budgets, so Claude writes with the same rules as the built-in generator. Sessions saved through MCP appear in the dashboard as completed, labelled "by Claude via MCP".
+Discovery briefs ask the client to inspect 8 articles across at least 5 independent domains, with at least 2 independent articles per suggested candidate where available. Syndicated stories count once. The client must synthesize the sources, cite dates and URLs, and disclose coverage gaps rather than invent support. The source list is a starting point, not a restriction; official brand, packaging, store and BPOM sources serve product verification separately from trend reporting.
+
+At the first lookup, explicitly research ingredients/INCI, advertised claims, exact variant/size, manufacturer URL, category, dated IDR price and product photo. Save verified fields and source notes; leave unknown values empty/null. Commission and affiliate links must not be guessed. Catalog summaries include ingredients, claims, price and post counts so the client can compare similar products and run additional searches for differentiated niche or premium alternatives. Price alone is not evidence of quality or earnings.
+
+After user selection and receipt of the affiliate link, save the researched fields, attach an exact-variant official product photo with `upload_product_image`, and verify with `get_product`. `create_product` returns `setup.imageStatus` and a next-step reminder. If no photo is available or upload fails, report the saved product with image setup pending and ask for a photo; do not duplicate the product. Exact-variant confirmation requires the user's explicit decision.
+
+These are instructions for the connected AI, which performs its own web searches; the server does not enforce article coverage or independently verify web claims. Research is saved directly as evidence (unapproved until reviewed); `save_drafts` saves both platform posts atomically through `POST /api/drafts`. No sessions or jobs are created. Historical session/job rows remain available only in JSON backups. Old session tools and `/api/sessions` routes have been removed.
 
 Deliberately not exposed: setting or removing the gateway API key, and the runner endpoints.
 
@@ -57,7 +61,6 @@ Deliberately not exposed: setting or removing the gateway API key, and the runne
 | --- | --- | --- |
 | Dashboard `/api/*` | loopback hosts only | public read/write access; no login required |
 | `/mcp` | loopback + bearer token | bearer token |
-| Gateway generation and runner | available | blocked (400): use the MCP save tools |
 
 ## Deploying later (not done yet)
 

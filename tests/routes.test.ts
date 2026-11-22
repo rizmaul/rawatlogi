@@ -1,17 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseRoute, routeHref } from "../src/lib/routes";
-test("new-session and session-detail URLs preserve their context", () => {
-  assert.equal(parseRoute("/research/new", "?product=abc").page, "researchNew");
-  assert.equal(parseRoute("/studio/new", "?product=abc").selected, "abc");
-  assert.equal(routeHref("researchNew", "abc"), "/research/new?product=abc");
-  assert.equal(
-    parseRoute("/research/sessions/session-1").sessionId,
-    "session-1",
-  );
-  assert.equal(parseRoute("/studio/sessions/session-2").page, "studioSession");
-  assert.equal(routeHref("studioSession", "s1"), "/studio/sessions/s1");
+test("removed session routes are not found", () => {
+  assert.equal(parseRoute("/research/sessions/old").notFound, true);
+  assert.equal(parseRoute("/studio/sessions/old").notFound, true);
 });
+
 test("each workspace section has a distinct directly loadable path", () => {
   for (const [page, path] of [
     ["overview", "/"],

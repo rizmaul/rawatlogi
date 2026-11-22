@@ -1,1 +1,0 @@
-export function runJobPool<T>(options:{claim:()=>Promise<T|null>;process:(job:T)=>Promise<void>;getConcurrency:()=>Promise<number>;signal:AbortSignal;pollMs?:number;onError?:(error:unknown)=>void}):Promise<void>;

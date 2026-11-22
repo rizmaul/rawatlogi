@@ -13,10 +13,6 @@ export function useRoute() {
       studio: "Writing studio",
       calendar: "Posting calendar",
       settings: "Workspace settings",
-      researchNew: "New research session",
-      studioNew: "New writing session",
-      researchSession: "Research session",
-      studioSession: "Writing session",
       post: "Post",
       postNew: "New post",
     };

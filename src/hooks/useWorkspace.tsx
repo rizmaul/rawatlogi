@@ -34,7 +34,6 @@ export function useWorkspace() {
     [results, setResults] = useState<any[]>([]),
     [searching, setSearching] = useState(false),
     [searched, setSearched] = useState(false),
-    [angle, setAngle] = useState(""),
     [busy, setBusy] = useState(false);
   const [month, setMonth] = useState(
       () =>
@@ -58,8 +57,6 @@ export function useWorkspace() {
   }
   useEffect(() => {
     refresh();
-    const id = setInterval(refresh, 5000);
-    return () => clearInterval(id);
   }, []);
   useEffect(() => {
     if (notice) {
@@ -110,6 +107,7 @@ export function useWorkspace() {
       await mutate("/records/" + kind + "/" + r.id, undefined, "DELETE");
       setModal(null);
       setNotice("Record deleted");
+      if (kind === "product") route.go("products");
     } catch {}
   }
   async function search() {
@@ -130,12 +128,6 @@ export function useWorkspace() {
       setSearching(false);
     }
   }
-  async function generate() {
-    try {
-      await mutate("/jobs", { productId: selected, angle });
-      setNotice("Queued");
-    } catch {}
-  }
   // Posts open as a full page (the "Content Notebook"), not a modal.
   function newPost(date?: string) {
     route.go("postNew", selected || state.products[0]?.id || "", date ? { date } : {});
@@ -150,9 +142,6 @@ export function useWorkspace() {
   const scheduled = state.posts.filter(
     (p) => p.data.scheduledAt && p.data.status !== "published",
   ).length;
-  const activeJobs = state.jobs.filter((j) =>
-    ["queued", "running"].includes(j.status),
-  );
   const nav = [
     ["overview", "Workspace", LayoutDashboard],
     ["products", "Products", Package],
@@ -167,10 +156,6 @@ export function useWorkspace() {
     studio: ["Writing"],
     calendar: ["Calendar"],
     settings: ["Settings"],
-    researchNew: ["New research session"],
-    studioNew: ["New writing session"],
-    researchSession: ["Research session"],
-    studioSession: ["Writing session"],
     post: ["Content notebook"],
     postNew: ["Content notebook"],
   };
@@ -219,8 +204,6 @@ export function useWorkspace() {
     setSearching,
     searched,
     setSearched,
-    angle,
-    setAngle,
     busy,
     setBusy,
     month,
@@ -238,13 +221,11 @@ export function useWorkspace() {
     save,
     remove,
     search,
-    generate,
     newPost,
     openPost,
     download,
     approved,
     scheduled,
-    activeJobs,
     nav,
     headings,
     productsFiltered,

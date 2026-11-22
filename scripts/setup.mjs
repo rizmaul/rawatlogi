@@ -8,17 +8,8 @@ import {
 } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
-if (!existsSync(".dev.vars"))
-  writeFileSync(
-    ".dev.vars",
-    `LOCAL_RUNNER_TOKEN="${randomBytes(32).toString("hex")}"\n`,
-  );
+if (!existsSync(".dev.vars")) writeFileSync(".dev.vars", "");
 mkdirSync("dist", { recursive: true });
-if (!/^SETTINGS_ENCRYPTION_KEY=/m.test(readFileSync(".dev.vars", "utf8")))
-  appendFileSync(
-    ".dev.vars",
-    `\nSETTINGS_ENCRYPTION_KEY="${randomBytes(32).toString("base64")}"\n`,
-  );
 // Bearer token for the MCP endpoint (http://127.0.0.1:8787/mcp). Never printed.
 if (!/^MCP_TOKEN=/m.test(readFileSync(".dev.vars", "utf8")))
   appendFileSync(

@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import app from "../worker/index";
 
-test("real D1: product → evidence → drafts → review invalidation and runner contracts", async () => {
+test("real D1: product → evidence → drafts → review invalidation", async () => {
   const mf = new Miniflare(
     convertV4MiniflareOptions({
       name: "test",
@@ -38,7 +38,6 @@ test("real D1: product → evidence → drafts → review invalidation and runne
     const env: any = {
       DB: db,
       APP_MODE: "local",
-      LOCAL_RUNNER_TOKEN: "test-token",
       BUCKET: await mf.getR2Bucket("BUCKET"),
     };
     const request = async (
@@ -66,7 +65,6 @@ test("real D1: product → evidence → drafts → review invalidation and runne
       ).status,
       403,
     );
-    assert.equal((await request("/runner/claim", {})).status, 401);
     const png = new Uint8Array(
       Buffer.from(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWZ8AAAAASUVORK5CYII=",
@@ -226,63 +224,8 @@ test("real D1: product → evidence → drafts → review invalidation and runne
       ).status,
       409,
     );
-    const job = await request("/jobs", {
-      productId: product.id,
-      angle: "Test cautious product introduction",
-    });
-    assert.equal(job.status, 202);
-    assert.equal(
-      (
-        await request("/jobs", {
-          productId: product.id,
-          angle: "Duplicate job",
-        })
-      ).status,
-      409,
-    );
-    const headers = { Authorization: "Bearer test-token" };
-    const claimed = (await request("/runner/claim", {}, "POST", headers)).value
-      .job;
-    assert.equal(claimed.payload.evidence.length, 0);
-    assert.equal(
-      (
-        await request(
-          "/runner/" + claimed.id + "/finish",
-          { claimToken: "wrong", error: "test" },
-          "POST",
-          headers,
-        )
-      ).status,
-      409,
-    );
-    const result = {
-      title: "Test result",
-      x: ["Tautan afiliasi https://example.com/test"],
-      threads: ["Tautan afiliasi https://example.com/test"],
-      sourceIds: [],
-      warnings: ["No approved evidence."],
-    };
-    const finished = await request(
-      "/runner/" + claimed.id + "/finish",
-      { claimToken: claimed.claimToken, result },
-      "POST",
-      headers,
-    );
-    assert.equal(finished.status, 200);
-    assert.equal(
-      (
-        await request(
-          "/runner/" + claimed.id + "/finish",
-          { claimToken: claimed.claimToken, result },
-          "POST",
-          headers,
-        )
-      ).status,
-      409,
-    );
     state = (await request("/state", undefined, "GET")).value;
-    assert.equal(state.posts.length, 3);
-    assert.equal(state.jobs[0].status, "completed");
+    assert.equal(state.posts.length, 1);
     const blocked = await app.request(
       "https://public.example/api/state",
       {},
